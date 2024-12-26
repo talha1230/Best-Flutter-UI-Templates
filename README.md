@@ -13,7 +13,7 @@ A modern fitness tracking app built with Flutter featuring workout tracking, mea
 ### Installation
 1. Clone the repository
 ```bash
-git clone https://github.com/talha1230/fitness-unimy.git
+git clone https://github.com/talha1230/Fitness_unimy.git
 ```
 
 2. Install dependencies
