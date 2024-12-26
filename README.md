@@ -1,127 +1,15 @@
+# Best-Flutter-UI-Templates
 
-# Fitness App
+completely free for everyone. Its build-in Flutter Dart.
 
-A modern fitness tracking app built with Flutter featuring workout tracking, meal planning, and progress monitoring.
+<a href="https://www.buymeacoffee.com/mitesh"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" height="60"></a>
 
-## Getting Started
+![Image](best_flutter_ui_templates/assets/introduction_animation/introduction_animation.png)
+![Image](best_flutter_ui_templates/assets/hotel/hotel_booking.png)
+![Image](best_flutter_ui_templates/assets/fitness_app/fitness_app.png)
+![Image](assets/custom_drawer.png)
+![Image](best_flutter_ui_templates/assets/design_course/design_course.png)
 
-### Prerequisites
-- Flutter SDK (3.0 or higher)
-- Android Studio or VS Code
-- Git
+### Some Screenshots
 
-### Installation
-1. Clone the repository
-```bash
-git clone https://github.com/talha1230/fitness-unimy.git
-```
-
-2. Install dependencies
-```bash
-flutter pub get
-```
-
-3. Run the app
-```bash
-flutter run
-```
-
-## Features
-
-- 🏃‍♂️ Workout Tracking
-- 📊 Progress Monitoring
-- 🍎 Meal Planning
-- 📈 Activity Statistics
-- 💪 Exercise Library
-
-## Project Structure
-
-```
-lib/
-├── fitness_app/
-│   ├── models/
-│   ├── ui_view/
-│   └── fitness_app_home_screen.dart
-├── main.dart
-└── app_theme.dart
-```
-
-## Development
-
-### Code Style
-Follow the official [Flutter style guide](https://flutter.dev/docs/development/style-guide)
-
-### Running Tests
-```bash
-flutter test
-```
-
-### Building for Production
-```bash
-flutter build apk --release  # Android
-flutter build ios --release  # iOS
-```
-Here's the updated section for the 
-
-README.md
-
- with browser platform running instructions:
-
-```markdown
-
-
-# Fitness App
-
-...existing code...
-
-### Running on Different Platforms
-
-#### Web Browsers
-```bash
-# Run on Edge
-flutter run -d edge
-
-# Run on Chrome
-flutter run -d chrome
-
-# List all available devices
-flutter devices
-```
-
-#### Enable Web Support
-If web support is not enabled:
-```bash
-flutter config --enable-web
-flutter devices # Verify web devices are listed
-```
-
-#### Build for Web
-```bash
-# Build for web deployment
-flutter build web
-
-# Build with specific renderer
-flutter build web --web-renderer html
-flutter build web --web-renderer canvaskit
-```
-
-The built web files will be in `build/web` directory.
-
-### Debugging in Browsers
-- Chrome DevTools: Press F12 or right-click -> Inspect
-- Edge DevTools: Press F12 or right-click -> Inspect
-
-
-
-
-
-## Contributing
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## License
-This project is licensed under the MIT License - see the LICENSE file for details
-```
+<img src="assets/introduction_animation.gif" height="300em"><img src="assets/hotel_booking.gif" height="300em"><img src="assets/custom_drawer.gif" height="300em"><img src="assets/fitness_app.gif" height="300em" /> <img src="assets/design_course.gif" height="300em" />
