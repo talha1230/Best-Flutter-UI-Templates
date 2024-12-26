@@ -67,12 +67,6 @@ README.md
 
  with browser platform running instructions:
 
-```markdown
-
-
-
-
-
 
 ### Running on Different Platforms
 
