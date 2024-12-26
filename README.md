@@ -70,9 +70,9 @@ README.md
 ```markdown
 
 
-# Fitness App
 
-...existing code...
+
+
 
 ### Running on Different Platforms
 
