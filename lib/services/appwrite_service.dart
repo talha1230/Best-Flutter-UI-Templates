@@ -8,16 +8,15 @@ class AppwriteService {
   static late final Realtime realtime;
 
   // Update these with your Appwrite details
-  static const String databaseId = "676e4e2d001f67247820"; // Update this
-  static const String userCollectionId = "676e61ed00335448c959"; // Update this
-  static const String workoutCollectionId = "676e628c00139ebb5f8c"; // Update this
-  static const String mealsCollectionId = "676e631d002e71aba841"; // Update this
+  static const String databaseId = "your_database_id";
+  static const String userCollectionId = "users";
+  static const String workoutCollectionId = "workouts";
+  static const String mealsCollectionId = "meals";
 
   static void initialize() {
     client
-      .setEndpoint('https://cloud.appwrite.io/v1')  // Verify this endpoint
-      .setProject('676e44ed001c5c1424fc')  // Verify this is your project ID
-      .setSelfSigned(status: true); // Add this for development
+      .setEndpoint('https://cloud.appwrite.io/v1')
+      .setProject('676e44ed001c5c1424fc'); // Your project ID
 
     account = Account(client);
     databases = Databases(client);

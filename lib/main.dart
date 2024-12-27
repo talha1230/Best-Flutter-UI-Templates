@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
         textTheme: AppTheme.textTheme,
         platform: TargetPlatform.iOS,
       ),
-      initialRoute: UserService.isLoggedIn ? '/home' : '/login',  // Remove the ()
+      initialRoute: UserService.isLoggedIn() ? '/home' : '/login',
       routes: {
         '/login': (context) => const LoginScreen(),  // Add const here
         '/home': (context) => NavigationHomeScreen(),

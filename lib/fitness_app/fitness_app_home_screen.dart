@@ -39,15 +39,14 @@ class _FitnessAppHomeScreenState extends State<FitnessAppHomeScreen>
   }
 
   void changeIndex(int index) {
-    setState(() {
-      if (index == 0 || index == 2) {
-        tabBody = MyDiaryScreen(animationController: animationController);
-      } else if (index == 1) {
-        tabBody = TrainingScreen(animationController: animationController);
-      } else if (index == 3) {
-        tabBody = ProfileScreen();
-      }
-    });
+    if (index == 0 || index == 2) {
+      tabBody = MyDiaryScreen(animationController: animationController);
+    } else if (index == 1) {
+      tabBody = TrainingScreen(animationController: animationController);
+    } else if (index == 3) {
+      tabBody = ProfileScreen();
+    }
+    setState(() {});
   }
 
   void setRemoveAllSelection(TabIconData tabIconData) {
@@ -60,6 +59,51 @@ class _FitnessAppHomeScreenState extends State<FitnessAppHomeScreen>
         }
       }
     });
+  }
+
+  void onBottomBarTap(int index) {
+    if (index == 3) { // Profile tab
+      _handleProfileTab();
+    } else {
+      setState(() {
+        tabBody = getTabBody(index);
+      });
+    }
+  }
+
+  void _handleProfileTab() async {
+    bool? confirmLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Logout', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmLogout == true) {
+      try {
+        await AuthService.logout();
+        if (mounted) {
+          Navigator.of(context).pushReplacementNamed('/login');
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Logout failed: ${e.toString()}')),
+          );
+        }
+      }
+    }
   }
 
   Widget getTabBody(int index) {
@@ -81,28 +125,64 @@ class _FitnessAppHomeScreenState extends State<FitnessAppHomeScreen>
       color: FitnessAppTheme.background,
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: Stack(
-          children: <Widget>[
-            tabBody ?? const SizedBox(),
-            bottomBar(),
-          ],
+        body: FutureBuilder<bool>(
+          future: getData(),
+          builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+            if (!snapshot.hasData) {
+              return const SizedBox();
+            } else {
+              return Stack(
+                children: <Widget>[
+                  tabBody!,
+                  bottomBar(),
+                ],
+              );
+            }
+          },
         ),
       ),
     );
   }
 
+  Future<bool> getData() async {
+    await Future<dynamic>.delayed(const Duration(milliseconds: 200));
+    return true;
+  }
+
   Widget bottomBar() {
     return Column(
       children: <Widget>[
-        const Expanded(child: SizedBox()), // Add this to push the bar to bottom
         const Divider(height: 1),
+        const Expanded(
+          child: SizedBox(),
+        ),
         BottomBarView(
           tabIconsList: tabIconsList,
           addClick: () {},
           changeIndex: (int index) {
             setRemoveAllSelection(tabIconsList[index]);
-            changeIndex(index);  // Use changeIndex instead of onBottomBarTap
+            onBottomBarTap(index);
           },
+        ),
+        SizedBox(
+          height: 62,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 8, right: 8, top: 4, bottom: 4),
+            child: Row(
+              children: <Widget>[
+                // ...existing tabs...
+                Expanded(
+                  child: TabIcons(
+                    tabIconData: tabIconsList[3],
+                    removeAllSelect: () {
+                      setRemoveAllSelection(tabIconsList[3]);
+                      onBottomBarTap(3);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
