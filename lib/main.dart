@@ -7,6 +7,9 @@ import 'screens/login_screen.dart';  // Verify this import exists
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'services/appwrite_service.dart';
 import 'services/user_service.dart';  // Add this import
+import 'screens/register_screen.dart';
+import 'package:provider/provider.dart';
+import 'services/user_data_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,19 +34,23 @@ class MyApp extends StatelessWidget {
       systemNavigationBarDividerColor: Colors.transparent,
       systemNavigationBarIconBrightness: Brightness.dark,
     ));
-    return MaterialApp(
-      title: 'Flutter UI',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        textTheme: AppTheme.textTheme,
-        platform: TargetPlatform.iOS,
+    return ChangeNotifierProvider(
+      create: (_) => UserDataProvider(),
+      child: MaterialApp(
+        title: 'Flutter UI',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          textTheme: AppTheme.textTheme,
+          platform: TargetPlatform.iOS,
+        ),
+        initialRoute: UserService.isLoggedIn ? '/home' : '/login',
+        routes: {
+          '/login': (context) => const LoginScreen(),  // Add const here
+          '/register': (context) => const RegisterScreen(),
+          '/home': (context) => NavigationHomeScreen(),
+        },
       ),
-      initialRoute: UserService.isLoggedIn ? '/home' : '/login',
-      routes: {
-        '/login': (context) => const LoginScreen(),  // Add const here
-        '/home': (context) => NavigationHomeScreen(),
-      },
     );
   }
 }

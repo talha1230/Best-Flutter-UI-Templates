@@ -5,7 +5,13 @@ import 'appwrite_service.dart';
 import 'database_service.dart';
 
 class UserService {
-  static const String _sessionKey = 'user_session';
+  static bool isLoggedIn = false;
+  static String? _userId;
+  static const String _userIdKey = 'userId';
+  static const String _sessionKey = 'session';
+
+  static String? get userId => _userId;
+
   static User? currentUser;
 
   static Future<void> initialize() async {
@@ -20,6 +26,8 @@ class UserService {
           await clearSession();
         }
       }
+      isLoggedIn = prefs.getString(_sessionKey) != null;
+      _userId = prefs.getString(_userIdKey);
     } catch (e) {
       currentUser = null;
     }
@@ -28,7 +36,10 @@ class UserService {
   static Future<void> saveSession(Session session) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_sessionKey, session.userId);
+      await prefs.setString(_sessionKey, session.toString());
+      await prefs.setString(_userIdKey, session.userId);
+      _userId = session.userId;
+      isLoggedIn = true;
       currentUser = await AppwriteService.account.get();
     } catch (e) {
       await clearSession();
@@ -40,11 +51,12 @@ class UserService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_sessionKey);
+      await prefs.remove(_userIdKey);
+      _userId = null;
+      isLoggedIn = false;
       currentUser = null;
     } catch (e) {
       rethrow;
     }
   }
-
-  static bool get isLoggedIn => currentUser != null;
 }

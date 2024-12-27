@@ -62,48 +62,10 @@ class _FitnessAppHomeScreenState extends State<FitnessAppHomeScreen>
   }
 
   void onBottomBarTap(int index) {
-    if (index == 3) { // Profile tab
-      _handleProfileTab();
-    } else {
-      setState(() {
-        tabBody = getTabBody(index);
-      });
-    }
-  }
-
-  void _handleProfileTab() async {
-    bool? confirmLogout = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Logout', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmLogout == true) {
-      try {
-        await AuthService.logout();
-        if (mounted) {
-          Navigator.of(context).pushReplacementNamed('/login');
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Logout failed: ${e.toString()}')),
-          );
-        }
-      }
-    }
+    setState(() {
+      tabBody = getTabBody(index);
+      setRemoveAllSelection(tabIconsList[index]);
+    });
   }
 
   Widget getTabBody(int index) {
@@ -114,6 +76,8 @@ class _FitnessAppHomeScreenState extends State<FitnessAppHomeScreen>
         return TrainingScreen(animationController: animationController);
       case 2:
         return MyDiaryScreen(animationController: animationController);
+      case 3:
+        return ProfileScreen(); // This will now show the profile screen
       default:
         return MyDiaryScreen(animationController: animationController);
     }
@@ -163,26 +127,6 @@ class _FitnessAppHomeScreenState extends State<FitnessAppHomeScreen>
             setRemoveAllSelection(tabIconsList[index]);
             onBottomBarTap(index);
           },
-        ),
-        SizedBox(
-          height: 62,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 8, right: 8, top: 4, bottom: 4),
-            child: Row(
-              children: <Widget>[
-                // ...existing tabs...
-                Expanded(
-                  child: TabIcons(
-                    tabIconData: tabIconsList[3],
-                    removeAllSelect: () {
-                      setRemoveAllSelection(tabIconsList[3]);
-                      onBottomBarTap(3);
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
       ],
     );

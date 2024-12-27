@@ -1,22 +1,23 @@
 import 'package:appwrite/appwrite.dart';
 
 class AppwriteService {
-  static final Client client = Client();
-  static late final Account account;
-  static late final Databases databases;
+  static Client client = Client();
+  static late Account account;
+  static late Databases databases;
   static late final Storage storage;
   static late final Realtime realtime;
 
-  // Update these with your Appwrite details
-  static const String databaseId = "your_database_id";
-  static const String userCollectionId = "users";
-  static const String workoutCollectionId = "workouts";
-  static const String mealsCollectionId = "meals";
+  // Update these constants with the exact IDs from your Appwrite console
+  static const String projectId = '676e44ed001c5c1424fc';
+  static const String databaseId = '676e4e2d001f67247820';
+  static const String userCollectionId = 'user_profiles';  // Update this
+  static const String workoutCollectionId = '676e628c00139ebb5f8c';
+  static const String mealsCollectionId = '676e631d002e71aba841';
 
   static void initialize() {
     client
       .setEndpoint('https://cloud.appwrite.io/v1')
-      .setProject('676e44ed001c5c1424fc'); // Your project ID
+      .setProject(projectId);
 
     account = Account(client);
     databases = Databases(client);

@@ -1,175 +1,167 @@
 import 'package:flutter/material.dart';
+import '../../../services/auth_service.dart';
+import '../../../services/database_service.dart';
+import '../../../services/user_service.dart';
 import '../fitness_app_theme.dart';
-import '../../services/auth_service.dart';
-import '../../services/appwrite_service.dart';
 
-class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+class ProfileScreen extends StatelessWidget {
+  double calculateBMI(double weight, double height) {
+    // Convert height from cm to meters
+    double heightInMeters = height / 100;
+    return weight / (heightInMeters * heightInMeters);
+  }
 
-  @override
-  _ProfileScreenState createState() => _ProfileScreenState();
-}
+  String getBMIStatus(double bmi) {
+    if (bmi < 18.5) return 'Underweight';
+    if (bmi < 25) return 'Normal';
+    if (bmi < 30) return 'Overweight';
+    return 'Obese';
+  }
 
-class _ProfileScreenState extends State<ProfileScreen> {
-  final double _topHeight = 240.0;
-  
+  Widget _buildBMICard(double height, double weight) {
+    final bmi = calculateBMI(weight, height);
+    final status = getBMIStatus(bmi);
+    final color = status == 'Normal' ? Colors.green 
+                 : status == 'Underweight' ? Colors.orange
+                 : Colors.red;
+
+    return Card(
+      margin: const EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            const Text(
+              'BMI Calculator',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Your BMI: ${bmi.toStringAsFixed(1)}',
+              style: TextStyle(fontSize: 24, color: color),
+            ),
+            Text(
+              'Status: $status',
+              style: TextStyle(fontSize: 18, color: color),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: FitnessAppTheme.background,
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Stack(
-          children: <Widget>[
-            _buildProfileContent(),
-            _buildTopBar(),
-          ],
-        ),
-      ),
-    );
-  }
+    return Scaffold(
+      backgroundColor: FitnessAppTheme.background,
+      body: SafeArea(
+        child: FutureBuilder<Map<String, dynamic>>(
+          future: UserService.userId != null 
+              ? DatabaseService.getUserProfile(UserService.userId!)
+              : Future.error('User not logged in'),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-  Widget _buildTopBar() {
-    return SizedBox(
-      height: _topHeight,
-      child: Stack(
-        children: <Widget>[
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  FitnessAppTheme.nearlyDarkBlue,
-                  FitnessAppTheme.nearlyBlue,
+            if (snapshot.hasError) {
+              print('Profile Error: ${snapshot.error}'); // Debug print
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Error: ${snapshot.error}'),
+                    ElevatedButton(
+                      onPressed: () => Navigator.of(context).pushReplacementNamed('/login'),
+                      child: const Text('Return to Login'),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            final userData = snapshot.data!;
+            final height = double.parse(userData['height'].toString());
+            final weight = double.parse(userData['weight'].toString());
+
+            return SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text('Profile', style: FitnessAppTheme.title),
+                  ),
+                  _buildBMICard(height, weight),
+                  _buildProfileInfo('Name', userData['name']),
+                  _buildProfileInfo('Email', userData['email']),
+                  _buildProfileInfo('Height', '${height.toStringAsFixed(1)} cm'),
+                  _buildProfileInfo('Weight', '${weight.toStringAsFixed(1)} kg'),
+                  _buildProfileInfo('Age', '${userData['age']}'),
+                  _buildProfileInfo('Fitness Goal', userData['fitness_goal']),
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: ElevatedButton(
+                      onPressed: () => _showLogoutDialog(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        minimumSize: const Size(double.infinity, 50),
+                      ),
+                      child: const Text('Logout', style: TextStyle(color: Colors.white)),
+                    ),
+                  ),
                 ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
               ),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(32.0),
-                bottomRight: Radius.circular(32.0),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 40,
-            left: 0,
-            right: 0,
-            child: Column(
-              children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.white,
-                  child: Icon(Icons.person, size: 60, color: FitnessAppTheme.nearlyBlue),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'John Doe',
-                  style: TextStyle(
-                    color: FitnessAppTheme.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileContent() {
-    return SingleChildScrollView(
-      child: Column(
-        children: <Widget>[
-          SizedBox(height: _topHeight - 30),
-          Container(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: <Widget>[
-                _buildProfileCard(
-                  'Personal Information',
-                  [
-                    _buildInfoRow('Email', 'john.doe@example.com'),
-                    _buildInfoRow('Height', '175 cm'),
-                    _buildInfoRow('Weight', '70 kg'),
-                    _buildInfoRow('Age', '28'),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _buildProfileCard(
-                  'Fitness Goals',
-                  [
-                    _buildInfoRow('Target Weight', '65 kg'),
-                    _buildInfoRow('Weekly Goal', '3 workouts'),
-                    _buildInfoRow('Daily Steps', '10,000'),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () async {
-                    await AuthService.logout();
-                    Navigator.of(context).pushReplacementNamed('/login');
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                  ),
-                  child: const Text('Logout'),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileCard(String title, List<Widget> children) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: FitnessAppTheme.nearlyDarkBlue,
-              ),
-            ),
-            const Divider(),
-            ...children,
-          ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildProfileInfo(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: FitnessAppTheme.grey,
-              fontSize: 16,
-            ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Card(
+        child: ListTile(
+          title: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+          subtitle: Text(value),
+        ),
+      ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              color: FitnessAppTheme.darkText,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
+          TextButton(
+            onPressed: () async {
+              try {
+                await AuthService.logout();
+                if (context.mounted) {
+                  Navigator.of(context).pushReplacementNamed('/login');
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Logout failed: ${e.toString()}')),
+                  );
+                }
+              }
+            },
+            child: const Text('Logout', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
