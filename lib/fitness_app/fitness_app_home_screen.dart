@@ -1,9 +1,11 @@
-import 'package:best_flutter_ui_templates/fitness_app/models/tabIcon_data.dart';
-import 'package:best_flutter_ui_templates/fitness_app/training/training_screen.dart';
 import 'package:flutter/material.dart';
+import 'my_diary/my_diary_screen.dart';
+import 'training/training_screen.dart';
+import 'profile/profile_screen.dart';
+import 'models/tabIcon_data.dart';
 import 'bottom_navigation_view/bottom_bar_view.dart';
 import 'fitness_app_theme.dart';
-import 'my_diary/my_diary_screen.dart';
+import '../services/auth_service.dart';  // Add this import
 
 class FitnessAppHomeScreen extends StatefulWidget {
   @override
@@ -13,24 +15,21 @@ class FitnessAppHomeScreen extends StatefulWidget {
 class _FitnessAppHomeScreenState extends State<FitnessAppHomeScreen>
     with TickerProviderStateMixin {
   AnimationController? animationController;
-
   List<TabIconData> tabIconsList = TabIconData.tabIconsList;
-
-  Widget tabBody = Container(
-    color: FitnessAppTheme.background,
-  );
+  Widget? tabBody;
 
   @override
   void initState() {
-    tabIconsList.forEach((TabIconData tab) {
-      tab.isSelected = false;
-    });
-    tabIconsList[0].isSelected = true;
-
-    animationController = AnimationController(
-        duration: const Duration(milliseconds: 600), vsync: this);
-    tabBody = MyDiaryScreen(animationController: animationController);
     super.initState();
+    animationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    tabBody = MyDiaryScreen(animationController: animationController);
+    
+    for (var tab in tabIconsList) {
+      tab.animationController = animationController;
+    }
   }
 
   @override
@@ -39,67 +38,70 @@ class _FitnessAppHomeScreenState extends State<FitnessAppHomeScreen>
     super.dispose();
   }
 
+  void changeIndex(int index) {
+    setState(() {
+      if (index == 0 || index == 2) {
+        tabBody = MyDiaryScreen(animationController: animationController);
+      } else if (index == 1) {
+        tabBody = TrainingScreen(animationController: animationController);
+      } else if (index == 3) {
+        tabBody = ProfileScreen();
+      }
+    });
+  }
+
+  void setRemoveAllSelection(TabIconData tabIconData) {
+    if (!mounted) return;
+    setState(() {
+      for (var tab in tabIconsList) {
+        tab.isSelected = false;
+        if (tabIconData.index == tab.index) {
+          tab.isSelected = true;
+        }
+      }
+    });
+  }
+
+  Widget getTabBody(int index) {
+    switch (index) {
+      case 0:
+        return MyDiaryScreen(animationController: animationController);
+      case 1:
+        return TrainingScreen(animationController: animationController);
+      case 2:
+        return MyDiaryScreen(animationController: animationController);
+      default:
+        return MyDiaryScreen(animationController: animationController);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
       color: FitnessAppTheme.background,
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: FutureBuilder<bool>(
-          future: getData(),
-          builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
-            if (!snapshot.hasData) {
-              return const SizedBox();
-            } else {
-              return Stack(
-                children: <Widget>[
-                  tabBody,
-                  bottomBar(),
-                ],
-              );
-            }
-          },
+        body: Stack(
+          children: <Widget>[
+            tabBody ?? const SizedBox(),
+            bottomBar(),
+          ],
         ),
       ),
     );
   }
 
-  Future<bool> getData() async {
-    await Future<dynamic>.delayed(const Duration(milliseconds: 200));
-    return true;
-  }
-
   Widget bottomBar() {
     return Column(
       children: <Widget>[
-        const Expanded(
-          child: SizedBox(),
-        ),
+        const Expanded(child: SizedBox()), // Add this to push the bar to bottom
+        const Divider(height: 1),
         BottomBarView(
           tabIconsList: tabIconsList,
           addClick: () {},
           changeIndex: (int index) {
-            if (index == 0 || index == 2) {
-              animationController?.reverse().then<dynamic>((data) {
-                if (!mounted) {
-                  return;
-                }
-                setState(() {
-                  tabBody =
-                      MyDiaryScreen(animationController: animationController);
-                });
-              });
-            } else if (index == 1 || index == 3) {
-              animationController?.reverse().then<dynamic>((data) {
-                if (!mounted) {
-                  return;
-                }
-                setState(() {
-                  tabBody =
-                      TrainingScreen(animationController: animationController);
-                });
-              });
-            }
+            setRemoveAllSelection(tabIconsList[index]);
+            changeIndex(index);  // Use changeIndex instead of onBottomBarTap
           },
         ),
       ],

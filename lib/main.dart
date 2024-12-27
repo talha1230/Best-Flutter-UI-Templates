@@ -3,10 +3,16 @@ import 'package:best_flutter_ui_templates/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'navigation_home_screen.dart';
+import 'screens/login_screen.dart';  // Verify this import exists
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'services/appwrite_service.dart';
+import 'services/user_service.dart';  // Add this import
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  AppwriteService.initialize();
+  await UserService.initialize();
+  
   await SystemChrome.setPreferredOrientations(<DeviceOrientation>[
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown
@@ -33,7 +39,11 @@ class MyApp extends StatelessWidget {
         textTheme: AppTheme.textTheme,
         platform: TargetPlatform.iOS,
       ),
-      home: NavigationHomeScreen(),
+      initialRoute: UserService.isLoggedIn ? '/home' : '/login',  // Remove the ()
+      routes: {
+        '/login': (context) => const LoginScreen(),  // Add const here
+        '/home': (context) => NavigationHomeScreen(),
+      },
     );
   }
 }

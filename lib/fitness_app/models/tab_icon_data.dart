@@ -39,8 +39,8 @@ class TabIconData {
       animationController: null,
     ),
     TabIconData(
-      imagePath: 'assets/fitness_app/tab_4.png',  // Profile tab unselected
-      selectedImagePath: 'assets/fitness_app/tab_4s.png',  // Profile tab selected
+      imagePath: 'assets/fitness_app/tab_4.png',
+      selectedImagePath: 'assets/fitness_app/tab_4s.png',
       index: 3,
       isSelected: false,
       animationController: null,
