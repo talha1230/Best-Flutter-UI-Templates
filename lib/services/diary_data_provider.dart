@@ -97,26 +97,24 @@ class DiaryDataProvider extends ChangeNotifier {
       // Remove from local state first
       final mealIndex = _diaryData.meals.indexWhere((m) => m.id == mealId);
       if (mealIndex == -1) {
-        throw Exception('Meal not found');
+        throw Exception('Meal not found in local state');
       }
       
       final deletedMeal = _diaryData.meals[mealIndex];
-      _diaryData.meals.removeAt(mealIndex);
-      _updateTotals();
-      notifyListeners();
-
-      // Then try to delete from database
+      
+      // Try to delete from database first
       try {
         await DatabaseService.deleteMeal(mealId);
-      } catch (e) {
-        // If database delete fails, restore the meal
-        _diaryData.meals.insert(mealIndex, deletedMeal);
+        // If successful, update local state
+        _diaryData.meals.removeAt(mealIndex);
         _updateTotals();
         notifyListeners();
+      } catch (e) {
+        print('Error deleting meal from database: $e');
         throw Exception('Failed to delete meal: $e');
       }
     } catch (e) {
-      print('Error deleting meal: $e');
+      print('Error in deleteMeal: $e');
       rethrow;
     }
   }

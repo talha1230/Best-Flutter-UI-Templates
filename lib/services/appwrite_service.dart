@@ -8,11 +8,11 @@ class AppwriteService {
   static late final Realtime realtime;
 
   // Update these constants with the exact IDs from your Appwrite console
-  static const String projectId = '676e44ed001c5c1424fc';
-  static const String databaseId = '676e4e2d001f67247820';
-  static const String userCollectionId = 'user_profiles';  // Update this
+  static const String projectId = '676e44ed001c5c1424fc'; //do not change this
+  static const String databaseId = '676e4e2d001f67247820'; //do not change this
+  static const String userCollectionId = 'user_profiles';  //do not change this too
   static const String workoutCollectionId = '676e628c00139ebb5f8c';
-  static const String mealsCollectionId = 'meals';  // This should be different from workoutCollectionId
+  static const String mealsCollectionId = 'meals';  //do not change this 
 
   static void initialize() {
     client

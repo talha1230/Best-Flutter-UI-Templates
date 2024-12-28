@@ -247,13 +247,38 @@ class DatabaseService {
 
   static Future<void> deleteMeal(String mealId) async {
     try {
+      print('Attempting to delete meal with ID: $mealId');
+      print('Using database ID: ${AppwriteService.databaseId}');
+      print('Using collection ID: ${AppwriteService.mealsCollectionId}');
+
+      // First verify the document exists
+      try {
+        await AppwriteService.databases.getDocument(
+          databaseId: AppwriteService.databaseId,
+          collectionId: AppwriteService.mealsCollectionId,
+          documentId: mealId,
+        );
+      } catch (e) {
+        print('Error checking meal existence: $e');
+        if (e is AppwriteException && e.code == 404) {
+          throw Exception('Meal not found');
+        }
+        rethrow;
+      }
+
+      // Then delete it
       await AppwriteService.databases.deleteDocument(
         databaseId: AppwriteService.databaseId,
         collectionId: AppwriteService.mealsCollectionId,
         documentId: mealId,
       );
+      
+      print('Successfully deleted meal');
     } catch (e) {
       print('Error deleting meal: $e');
+      if (e is AppwriteException) {
+        throw Exception('Failed to delete meal: ${e.message}');
+      }
       rethrow;
     }
   }

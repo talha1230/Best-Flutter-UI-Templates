@@ -258,37 +258,7 @@ class MealItem extends StatelessWidget {
   void _showEditDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Meal'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                initialValue: meal.name,
-                decoration: const InputDecoration(labelText: 'Name'),
-                onChanged: (value) {
-                  // Add edit logic here
-                },
-              ),
-              // Add more fields as needed
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              // Add save logic here
-              Navigator.pop(context);
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+      builder: (context) => _EditMealDialog(meal: meal),
     );
   }
 
@@ -349,6 +319,137 @@ class _ReasonDialogState extends State<_ReasonDialog> {
         ),
         TextButton(
           onPressed: () => Navigator.pop(context, _reasonController.text),
+          child: const Text('Save'),
+        ),
+      ],
+    );
+  }
+}
+
+class _EditMealDialog extends StatefulWidget {
+  final Meal meal;
+
+  const _EditMealDialog({Key? key, required this.meal}) : super(key: key);
+
+  @override
+  _EditMealDialogState createState() => _EditMealDialogState();
+}
+
+class _EditMealDialogState extends State<_EditMealDialog> {
+  late TextEditingController nameController;
+  late TextEditingController caloriesController;
+  late TextEditingController carbsController;
+  late TextEditingController proteinController;
+  late TextEditingController fatController;
+  late FocusNode nameFocus;
+
+  @override
+  void initState() {
+    super.initState();
+    nameController = TextEditingController(text: widget.meal.name);
+    caloriesController = TextEditingController(text: widget.meal.calories.toString());
+    carbsController = TextEditingController(text: widget.meal.macros.carbs.toString());
+    proteinController = TextEditingController(text: widget.meal.macros.protein.toString());
+    fatController = TextEditingController(text: widget.meal.macros.fat.toString());
+    nameFocus = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    caloriesController.dispose();
+    carbsController.dispose();
+    proteinController.dispose();
+    fatController.dispose();
+    nameFocus.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit Meal'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: nameController,
+              focusNode: nameFocus,
+              decoration: const InputDecoration(
+                labelText: 'Name',
+                border: OutlineInputBorder(),
+              ),
+              onTap: () {
+                // Ensure focus is properly set when tapped
+                if (!nameFocus.hasFocus) {
+                  nameFocus.requestFocus();
+                }
+              },
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: caloriesController,
+              decoration: const InputDecoration(
+                labelText: 'Calories',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: carbsController,
+              decoration: const InputDecoration(
+                labelText: 'Carbs (g)',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: proteinController,
+              decoration: const InputDecoration(
+                labelText: 'Protein (g)',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: fatController,
+              decoration: const InputDecoration(
+                labelText: 'Fat (g)',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () {
+            final updatedMeal = Meal(
+              id: widget.meal.id,
+              name: nameController.text,
+              calories: double.tryParse(caloriesController.text) ?? widget.meal.calories,
+              macros: MacroNutrients(
+                carbs: double.tryParse(carbsController.text) ?? widget.meal.macros.carbs,
+                protein: double.tryParse(proteinController.text) ?? widget.meal.macros.protein,
+                fat: double.tryParse(fatController.text) ?? widget.meal.macros.fat,
+              ),
+              time: widget.meal.time,
+              status: widget.meal.status,
+              reason: widget.meal.reason,
+            );
+            
+            context.read<DiaryDataProvider>().updateMeal(widget.meal.id, updatedMeal);
+            Navigator.pop(context);
+          },
           child: const Text('Save'),
         ),
       ],
