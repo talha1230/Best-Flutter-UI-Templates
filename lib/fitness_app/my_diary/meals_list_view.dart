@@ -2,6 +2,9 @@ import 'package:best_flutter_ui_templates/fitness_app/fitness_app_theme.dart';
 import 'package:best_flutter_ui_templates/fitness_app/models/meals_list_data.dart';
 import 'package:best_flutter_ui_templates/main.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../services/diary_data_provider.dart';
+import 'meal_item.dart';
 
 import '../../main.dart';
 
@@ -20,18 +23,12 @@ class MealsListView extends StatefulWidget {
 class _MealsListViewState extends State<MealsListView>
     with TickerProviderStateMixin {
   AnimationController? animationController;
-  List<MealsListData> mealsListData = MealsListData.tabIconsList;
 
   @override
   void initState() {
     animationController = AnimationController(
         duration: const Duration(milliseconds: 2000), vsync: this);
     super.initState();
-  }
-
-  Future<bool> getData() async {
-    await Future<dynamic>.delayed(const Duration(milliseconds: 50));
-    return true;
   }
 
   @override
@@ -50,32 +47,45 @@ class _MealsListViewState extends State<MealsListView>
           child: Transform(
             transform: Matrix4.translationValues(
                 0.0, 30 * (1.0 - widget.mainScreenAnimation!.value), 0.0),
-            child: Container(
-              height: 216,
-              width: double.infinity,
-              child: ListView.builder(
-                padding: const EdgeInsets.only(
-                    top: 0, bottom: 0, right: 16, left: 16),
-                itemCount: mealsListData.length,
-                scrollDirection: Axis.horizontal,
-                itemBuilder: (BuildContext context, int index) {
-                  final int count =
-                      mealsListData.length > 10 ? 10 : mealsListData.length;
-                  final Animation<double> animation =
-                      Tween<double>(begin: 0.0, end: 1.0).animate(
-                          CurvedAnimation(
-                              parent: animationController!,
-                              curve: Interval((1 / count) * index, 1.0,
-                                  curve: Curves.fastOutSlowIn)));
-                  animationController?.forward();
-
-                  return MealsView(
-                    mealsListData: mealsListData[index],
-                    animation: animation,
-                    animationController: animationController!,
+            child: Consumer<DiaryDataProvider>(
+              builder: (context, provider, child) {
+                if (provider.diaryData.meals.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Text(
+                        'No meals added yet',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
                   );
-                },
-              ),
+                }
+                
+                return ListView.builder(
+                  padding: EdgeInsets.zero,
+                  itemCount: provider.diaryData.meals.length,
+                  physics: const NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  itemBuilder: (BuildContext context, int index) {
+                    final meal = provider.diaryData.meals[index];
+                    animationController?.forward();
+                    return MealItem(
+                      meal: meal,
+                      animation: Tween<double>(begin: 0.0, end: 1.0).animate(
+                        CurvedAnimation(
+                          parent: animationController!,
+                          curve: Interval((1 / provider.diaryData.meals.length) * index, 1.0,
+                              curve: Curves.fastOutSlowIn),
+                        ),
+                      ),
+                      animationController: animationController,
+                    );
+                  },
+                );
+              },
             ),
           ),
         );

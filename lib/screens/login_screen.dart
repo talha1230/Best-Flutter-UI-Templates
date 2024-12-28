@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+import '../services/diary_data_provider.dart';
 import '../fitness_app/fitness_app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -30,9 +32,18 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
       
-      await UserService.saveSession(session);  // This will now save the userId
-      
+      await UserService.saveSession(session);
+
       if (mounted) {
+        // Initialize diary data (including water intake) after successful login
+        await context.read<DiaryDataProvider>().loadDiaryData();
+        
+        // Show loading indicator while data is being loaded
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Loading your data...')),
+        );
+
+        // Navigate to home screen
         Navigator.of(context).pushReplacementNamed('/home');
       }
     } catch (e) {

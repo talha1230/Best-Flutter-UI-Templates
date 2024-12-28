@@ -10,6 +10,7 @@ import 'services/user_service.dart';  // Add this import
 import 'screens/register_screen.dart';
 import 'package:provider/provider.dart';
 import 'services/user_data_provider.dart';
+import 'services/diary_data_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,8 +35,11 @@ class MyApp extends StatelessWidget {
       systemNavigationBarDividerColor: Colors.transparent,
       systemNavigationBarIconBrightness: Brightness.dark,
     ));
-    return ChangeNotifierProvider(
-      create: (_) => UserDataProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UserDataProvider()),
+        ChangeNotifierProvider(create: (_) => DiaryDataProvider()),
+      ],
       child: MaterialApp(
         title: 'Flutter UI',
         debugShowCheckedModeBanner: false,

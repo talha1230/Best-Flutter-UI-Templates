@@ -3,6 +3,9 @@ import 'package:best_flutter_ui_templates/fitness_app/fitness_app_theme.dart';
 import 'package:best_flutter_ui_templates/fitness_app/models/tabIcon_data.dart';
 import 'package:best_flutter_ui_templates/main.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../services/diary_data_provider.dart';
+import '../my_diary/add_meal_dialog.dart';
 
 import '../../main.dart';
 import '../models/tabIcon_data.dart';
@@ -31,6 +34,17 @@ class _BottomBarViewState extends State<BottomBarView>
     );
     animationController?.forward();
     super.initState();
+  }
+
+  void _showAddMealDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AddMealDialog(
+        onAdd: (meal) {
+          Provider.of<DiaryDataProvider>(context, listen: false).addMeal(meal);
+        },
+      ),
+    );
   }
 
   @override
@@ -165,7 +179,7 @@ class _BottomBarViewState extends State<BottomBarView>
                           splashColor: Colors.white.withOpacity(0.1),
                           highlightColor: Colors.transparent,
                           focusColor: Colors.transparent,
-                          onTap: widget.addClick,
+                          onTap: () => _showAddMealDialog(context),
                           child: Icon(
                             Icons.add,
                             color: FitnessAppTheme.white,

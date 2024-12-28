@@ -1,5 +1,6 @@
 import 'package:appwrite/appwrite.dart';
 import 'appwrite_service.dart';
+import '../fitness_app/models/diary_data.dart';  // Add this import
 
 class DatabaseService {
   static Future<void> createWorkout({
@@ -53,13 +54,32 @@ class DatabaseService {
     required Map<String, dynamic> profileData,
   }) async {
     try {
+      print('Updating profile with data: $profileData');
+      
+      // Only include fields that exist in the Appwrite collection
+      final validData = {
+        if (profileData.containsKey('water_intake')) 
+          'water_intake': profileData['water_intake'],
+        if (profileData.containsKey('height')) 
+          'height': profileData['height'],
+        if (profileData.containsKey('weight')) 
+          'weight': profileData['weight'],
+        if (profileData.containsKey('age')) 
+          'age': profileData['age'],
+        if (profileData.containsKey('fitness_goal')) 
+          'fitness_goal': profileData['fitness_goal'],
+      };
+
+      print('Filtered valid data to update: $validData');
+
       await AppwriteService.databases.updateDocument(
         databaseId: AppwriteService.databaseId,
         collectionId: AppwriteService.userCollectionId,
         documentId: userId,
-        data: profileData,
+        data: validData,
       );
     } catch (e) {
+      print('Error updating profile: $e');
       rethrow;
     }
   }
@@ -85,20 +105,29 @@ class DatabaseService {
         return {
           'name': user.name,
           'email': user.email,
-          'height': document.data['height'],
-          'weight': document.data['weight'],
-          'age': document.data['age'],
-          'fitness_goal': document.data['fitness_goal'],
+          'height': document.data['height'] ?? 0.0,
+          'weight': document.data['weight'] ?? 0.0,
+          'age': document.data['age'] ?? 0,
+          'fitness_goal': document.data['fitness_goal'] ?? 'Not set',
+          'water_intake': document.data['water_intake'] ?? 0,
+          'water_goal': document.data['water_goal'] ?? 8,
         };
       } catch (e) {
-        print('Error fetching document: $e');
-        return {
-          'name': user.name,
-          'email': user.email,
+        // If no document exists, create one with default values
+        final defaultData = {
+          'water_intake': 0,
+          'water_goal': 8,
           'height': 0.0,
           'weight': 0.0,
           'age': 0,
           'fitness_goal': 'Not set',
+        };
+        
+        await updateUserProfile(userId: userId, profileData: defaultData);
+        return {
+          'name': user.name,
+          'email': user.email,
+          ...defaultData,
         };
       }
     } catch (e) {
@@ -148,6 +177,87 @@ class DatabaseService {
       print('Error creating profile: $e');
       print('Stack trace: ${StackTrace.current}');
       rethrow;
+    }
+  }
+
+  static Future<void> saveMeal(String userId, Meal meal) async {
+    try {
+      print('Saving meal to collection: ${AppwriteService.mealsCollectionId}');
+      
+      final data = {
+        'user_id': userId,
+        'name': meal.name,
+        'calories': meal.calories,
+        'carbs': meal.macros.carbs,
+        'protein': meal.macros.protein,
+        'fat': meal.macros.fat,
+        'time_hour': meal.time.hour,
+        'time_minute': meal.time.minute,
+        'date': meal.time.toIso8601String().split('T')[0],
+      };
+      
+      print('Attempting to save meal data: $data');
+
+      final result = await AppwriteService.databases.createDocument(
+        databaseId: AppwriteService.databaseId,
+        collectionId: AppwriteService.mealsCollectionId,
+        documentId: ID.unique(),
+        data: data,
+      );
+
+      print('Meal saved successfully: ${result.$id}');
+    } catch (e) {
+      print('Error saving meal: $e');
+      rethrow;
+    }
+  }
+
+  static Future<List<Meal>> getUserMeals(String userId, {DateTime? date}) async {
+    try {
+      print('Fetching meals for user: $userId');
+      if (date != null) {
+        print('Filtering by date: ${date.toIso8601String().split('T')[0]}');
+      }
+
+      final queries = [
+        Query.equal('user_id', userId),
+      ];
+      
+      if (date != null) {
+        queries.add(Query.equal('date', date.toIso8601String().split('T')[0]));
+      }
+
+      final response = await AppwriteService.databases.listDocuments(
+        databaseId: AppwriteService.databaseId,
+        collectionId: AppwriteService.mealsCollectionId,
+        queries: queries,
+      );
+
+      print('Found ${response.documents.length} meals');
+      return response.documents.map((doc) {
+        final mealTime = DateTime(
+          DateTime.now().year,
+          DateTime.now().month,
+          DateTime.now().day,
+          doc.data['time_hour'],
+          doc.data['time_minute'],
+        );
+        
+        return Meal(
+          name: doc.data['name'],
+          calories: doc.data['calories'].toDouble(),
+          macros: MacroNutrients(
+            carbs: doc.data['carbs'].toDouble(),
+            protein: doc.data['protein'].toDouble(),
+            fat: doc.data['fat'].toDouble(),
+          ),
+          time: mealTime,
+        );
+      }).toList();
+    } catch (e, stackTrace) {
+      print('Error getting meals: $e');
+      print('Stack trace: $stackTrace');
+      return [];
     }
   }
 }

@@ -12,7 +12,7 @@ class AppwriteService {
   static const String databaseId = '676e4e2d001f67247820';
   static const String userCollectionId = 'user_profiles';  // Update this
   static const String workoutCollectionId = '676e628c00139ebb5f8c';
-  static const String mealsCollectionId = '676e631d002e71aba841';
+  static const String mealsCollectionId = 'meals';  // Verify this matches exactly what you created
 
   static void initialize() {
     client
