@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/diary_data_provider.dart';
 import 'meal_item.dart';
+import 'add_meal_dialog.dart';  // Add this import
 
 import '../../main.dart';
 
@@ -49,17 +50,55 @@ class _MealsListViewState extends State<MealsListView>
                 0.0, 30 * (1.0 - widget.mainScreenAnimation!.value), 0.0),
             child: Consumer<DiaryDataProvider>(
               builder: (context, provider, child) {
+                if (provider.isLoading) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+
+                if (provider.error != null) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Error loading meals: ${provider.error}',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => provider.loadDiaryData(),
+                          child: Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
                 if (provider.diaryData.meals.isEmpty) {
                   return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: Text(
-                        'No meals added yet',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 16,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'No meals added yet',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 16,
+                          ),
                         ),
-                      ),
+                        ElevatedButton(
+                          onPressed: () {
+                            // Show add meal dialog
+                            showDialog(
+                              context: context,
+                              builder: (context) => AddMealDialog(
+                                onAdd: (meal) => provider.addMeal(meal),
+                              ),
+                            );
+                          },
+                          child: Text('Add Meal'),
+                        ),
+                      ],
                     ),
                   );
                 }

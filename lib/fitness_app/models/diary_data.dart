@@ -27,17 +27,30 @@ class DiaryData {
 }
 
 class Meal {
+  String id;  // Add this
   String name;
   double calories;
   MacroNutrients macros;
   DateTime time;
+  MealStatus status;  // Add this
+  String? reason;     // Add this
 
   Meal({
+    this.id = '',    // Add this
     required this.name,
     required this.calories,
     required this.macros,
     required this.time,
+    this.status = MealStatus.pending,  // Add this
+    this.reason,                       // Add this
   });
+}
+
+// Add this enum
+enum MealStatus {
+  pending,
+  consumed,
+  skipped
 }
 
 class MacroNutrients {

@@ -193,7 +193,9 @@ class DatabaseService {
         'fat': meal.macros.fat,
         'time_hour': meal.time.hour,
         'time_minute': meal.time.minute,
-        'date': meal.time.toIso8601String().split('T')[0],
+        'date': formatDateForDb(meal.time),
+        'status': meal.status.name,  // Add this
+        'reason': meal.reason,       // Add this
       };
       
       print('Attempting to save meal data: $data');
@@ -208,6 +210,50 @@ class DatabaseService {
       print('Meal saved successfully: ${result.$id}');
     } catch (e) {
       print('Error saving meal: $e');
+      rethrow;
+    }
+  }
+
+  static String formatDateForDb(DateTime date) {
+    return date.toIso8601String().split('T')[0];
+  }
+
+  static Future<void> updateMeal(String userId, String mealId, Meal meal) async {
+    try {
+      final data = {
+        'name': meal.name,
+        'calories': meal.calories,
+        'carbs': meal.macros.carbs,
+        'protein': meal.macros.protein,
+        'fat': meal.macros.fat,
+        'time_hour': meal.time.hour,
+        'time_minute': meal.time.minute,
+        'date': formatDateForDb(meal.time),
+        'status': meal.status.name,
+        'reason': meal.reason,
+      };
+
+      await AppwriteService.databases.updateDocument(
+        databaseId: AppwriteService.databaseId,
+        collectionId: AppwriteService.mealsCollectionId,
+        documentId: mealId,
+        data: data,
+      );
+    } catch (e) {
+      print('Error updating meal: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> deleteMeal(String mealId) async {
+    try {
+      await AppwriteService.databases.deleteDocument(
+        databaseId: AppwriteService.databaseId,
+        collectionId: AppwriteService.mealsCollectionId,
+        documentId: mealId,
+      );
+    } catch (e) {
+      print('Error deleting meal: $e');
       rethrow;
     }
   }
@@ -244,6 +290,7 @@ class DatabaseService {
         );
         
         return Meal(
+          id: doc.$id,
           name: doc.data['name'],
           calories: doc.data['calories'].toDouble(),
           macros: MacroNutrients(
@@ -252,6 +299,11 @@ class DatabaseService {
             fat: doc.data['fat'].toDouble(),
           ),
           time: mealTime,
+          status: MealStatus.values.firstWhere(
+            (s) => s.name == (doc.data['status'] ?? 'pending'),
+            orElse: () => MealStatus.pending,
+          ),
+          reason: doc.data['reason'],
         );
       }).toList();
     } catch (e, stackTrace) {

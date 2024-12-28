@@ -7,14 +7,17 @@ import 'package:appwrite/models.dart';
 class DiaryDataProvider extends ChangeNotifier {
   DiaryData _diaryData = DiaryData();
   bool _isLoading = false;
+  String? _error;
 
   DiaryData get diaryData => _diaryData;
   bool get isLoading => _isLoading;
+  String? get error => _error;
 
   Future<void> loadDiaryData() async {
     if (UserService.userId == null) return;
 
     _isLoading = true;
+    _error = null;
     notifyListeners();
 
     try {
@@ -40,12 +43,15 @@ class DiaryDataProvider extends ChangeNotifier {
           ),
         ),
       );
+      
+      _error = null;
     } catch (e) {
       print('Error loading diary data: $e');
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
-
-    _isLoading = false;
-    notifyListeners();
   }
 
   Future<void> addMeal(Meal meal) async {
@@ -68,6 +74,68 @@ class DiaryDataProvider extends ChangeNotifier {
       print('Error adding meal: $e');
       rethrow;
     }
+  }
+
+  Future<void> updateMeal(String mealId, Meal updatedMeal) async {
+    try {
+      await DatabaseService.updateMeal(UserService.userId!, mealId, updatedMeal);
+      
+      final index = _diaryData.meals.indexWhere((m) => m.id == mealId);
+      if (index != -1) {
+        _diaryData.meals[index] = updatedMeal;
+        _updateTotals();
+        notifyListeners();
+      }
+    } catch (e) {
+      print('Error updating meal: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteMeal(String mealId) async {
+    try {
+      // Remove from local state first
+      final mealIndex = _diaryData.meals.indexWhere((m) => m.id == mealId);
+      if (mealIndex == -1) {
+        throw Exception('Meal not found');
+      }
+      
+      final deletedMeal = _diaryData.meals[mealIndex];
+      _diaryData.meals.removeAt(mealIndex);
+      _updateTotals();
+      notifyListeners();
+
+      // Then try to delete from database
+      try {
+        await DatabaseService.deleteMeal(mealId);
+      } catch (e) {
+        // If database delete fails, restore the meal
+        _diaryData.meals.insert(mealIndex, deletedMeal);
+        _updateTotals();
+        notifyListeners();
+        throw Exception('Failed to delete meal: $e');
+      }
+    } catch (e) {
+      print('Error deleting meal: $e');
+      rethrow;
+    }
+  }
+
+  void _updateTotals() {
+    _diaryData.eatenCalories = _diaryData.meals
+        .where((m) => m.status == MealStatus.consumed)
+        .fold<double>(0, (sum, meal) => sum + meal.calories);
+        
+    _diaryData.macros = _diaryData.meals
+        .where((m) => m.status == MealStatus.consumed)
+        .fold<MacroNutrients>(
+          MacroNutrients(),
+          (sum, meal) => MacroNutrients(
+            carbs: sum.carbs + meal.macros.carbs,
+            protein: sum.protein + meal.macros.protein,
+            fat: sum.fat + meal.macros.fat,
+          ),
+        );
   }
 
   Future<void> updateWaterIntake(int glasses) async {
