@@ -8,6 +8,7 @@ class DiaryData {
   double weight;
   double height;
   MacroNutrients macros;
+  final bool isMale; // Add this property
 
   DiaryData({
     this.eatenCalories = 0,
@@ -19,6 +20,7 @@ class DiaryData {
     this.weight = 0,
     this.height = 0,
     MacroNutrients? macros,
+    this.isMale = true, // Default to male for now
   }) : this.meals = meals ?? [],  // Initialize as empty mutable list
        this.macros = macros ?? MacroNutrients();
 
