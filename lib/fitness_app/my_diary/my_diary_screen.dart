@@ -58,7 +58,10 @@ class _MyDiaryScreenState extends State<MyDiaryScreen>
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<DiaryDataProvider>().loadDiaryData();
+      final provider = context.read<DiaryDataProvider>();
+      if (provider.diaryData.meals.isEmpty && !provider.isLoading) {
+        provider.loadDiaryData();
+      }
     });
   }
 

@@ -20,6 +20,7 @@ class _AddMealDialogState extends State<AddMealDialog> {
   void _addMeal() {
     if (_formKey.currentState?.validate() ?? false) {
       final meal = Meal(
+        id: 'temp_${DateTime.now().millisecondsSinceEpoch}', // Add temporary ID
         name: _nameController.text,
         calories: double.tryParse(_caloriesController.text) ?? 0,
         macros: MacroNutrients(

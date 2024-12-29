@@ -180,7 +180,7 @@ class DatabaseService {
     }
   }
 
-  static Future<void> saveMeal(String userId, Meal meal) async {
+  static Future<String> saveMeal(String userId, Meal meal) async {
     try {
       print('Saving meal to collection: ${AppwriteService.mealsCollectionId}');
       
@@ -208,6 +208,7 @@ class DatabaseService {
       );
 
       print('Meal saved successfully: ${result.$id}');
+      return result.$id; // Return the document ID
     } catch (e) {
       print('Error saving meal: $e');
       rethrow;
@@ -218,9 +219,15 @@ class DatabaseService {
     return date.toIso8601String().split('T')[0];
   }
 
-  static Future<void> updateMeal(String userId, String mealId, Meal meal) async {
+  static Future<void> updateMeal({
+    required String userId,
+    required String mealId,
+    required Meal meal,
+  }) async {
     try {
+      print('Updating meal with ID: $mealId');
       final data = {
+        'user_id': userId,
         'name': meal.name,
         'calories': meal.calories,
         'carbs': meal.macros.carbs,
@@ -233,14 +240,18 @@ class DatabaseService {
         'reason': meal.reason,
       };
 
+      print('Attempting to update meal with data: $data');
+
       await AppwriteService.databases.updateDocument(
         databaseId: AppwriteService.databaseId,
         collectionId: AppwriteService.mealsCollectionId,
         documentId: mealId,
         data: data,
       );
+      
+      print('Meal updated successfully');
     } catch (e) {
-      print('Error updating meal: $e');
+      print('Error updating meal in database: $e');
       rethrow;
     }
   }

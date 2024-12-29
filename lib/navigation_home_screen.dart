@@ -6,6 +6,8 @@ import 'package:FITBACK/help_screen.dart';
 import 'package:FITBACK/home_screen.dart';
 import 'package:FITBACK/invite_friend_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'services/diary_data_provider.dart';
 
 class NavigationHomeScreen extends StatefulWidget {
   @override
@@ -21,6 +23,10 @@ class _NavigationHomeScreenState extends State<NavigationHomeScreen> {
     drawerIndex = DrawerIndex.HOME;
     screenView = const MyHomePage();
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Load data immediately after widget is built
+      context.read<DiaryDataProvider>().loadDiaryData();
+    });
   }
 
   @override

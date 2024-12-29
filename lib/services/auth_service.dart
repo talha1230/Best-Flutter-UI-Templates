@@ -53,7 +53,7 @@ class AuthService {
       );
       return session;
     } catch (e) {
-      rethrow;
+      throw Exception('Login failed: ${e.toString()}');
     }
   }
 
