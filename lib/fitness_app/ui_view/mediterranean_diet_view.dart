@@ -45,6 +45,55 @@ class MediterranesnDietView extends StatelessWidget {
     };
   }
 
+  Color _getCalorieStatusColor(double caloriesNeeded) {
+    if (caloriesNeeded <= 0) {
+      return Colors.green; // On track or exceeded goal
+    } else if (caloriesNeeded <= 300) {
+      return Colors.orange; // Close to goal
+    }
+    return Colors.red; // Far from goal
+  }
+
+  String _getCalorieStatusMessage(double caloriesNeeded) {
+    if (caloriesNeeded <= 0) {
+      return 'Goal reached! ${(-caloriesNeeded).toInt()} Kcal over';
+    }
+    return '${caloriesNeeded.toInt()} Kcal to reach goal';
+  }
+
+  Widget _buildCalorieStatus(double caloriesNeeded) {
+    final color = _getCalorieStatusColor(caloriesNeeded);
+    final message = _getCalorieStatusMessage(caloriesNeeded);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            caloriesNeeded <= 0 ? Icons.check_circle : Icons.info_outline,
+            color: color,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            message,
+            style: TextStyle(
+              color: color,
+              fontFamily: FitnessAppTheme.fontName,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<Map<String, dynamic>>(
@@ -63,6 +112,8 @@ class MediterranesnDietView extends StatelessWidget {
             final eatenCalories = diaryData.diaryData.eatenCalories;
             final burnedCalories = diaryData.diaryData.burnedCalories;
             final remainingCalories = dailyCalories - eatenCalories + burnedCalories;
+            final dailyGoal = userData['dailyCalories'];
+            final caloriesNeeded = dailyGoal - (eatenCalories - burnedCalories);
 
             // Calculate remaining macros
             final consumedMacros = diaryData.diaryData.macros;
@@ -81,6 +132,7 @@ class MediterranesnDietView extends StatelessWidget {
                   remainingCarbs,
                   remainingProtein,
                   remainingFat,
+                  caloriesNeeded, // Add this parameter
                 );
               },
             );
@@ -98,6 +150,7 @@ class MediterranesnDietView extends StatelessWidget {
     double remainingCarbs,
     double remainingProtein,
     double remainingFat,
+    double caloriesNeeded, // Add this parameter
   ) {
     // Replace hardcoded values with actual data
     return FadeTransition(
@@ -281,7 +334,11 @@ class MediterranesnDietView extends StatelessWidget {
                       )
                     ],
                   ),
-                )
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: _buildCalorieStatus(caloriesNeeded),
+                ),
               ],
             ),
           ),
@@ -423,6 +480,27 @@ class MediterranesnDietView extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildProgressRing(double caloriesNeeded, double dailyGoal) {
+    // Calculate progress percentage
+    final progress = math.max(0.0, math.min(1.0, (dailyGoal - caloriesNeeded) / dailyGoal));
+    final angle = 140 + (360 - 140) * progress;
+    
+    return CustomPaint(
+      painter: CurvePainter(
+        colors: [
+          _getCalorieStatusColor(caloriesNeeded),
+          HexColor("#8A98E8"),
+          HexColor("#8A98E8"),
+        ],
+        angle: angle,
+      ),
+      child: const SizedBox(
+        width: 108,
+        height: 108,
+      ),
     );
   }
 }
