@@ -8,6 +8,7 @@ import '../../services/database_service.dart';
 import '../../services/user_service.dart';
 import 'package:provider/provider.dart';
 import '../../services/diary_data_provider.dart';
+import '../models/macro_nutrients.dart';
 
 class MediterranesnDietView extends StatelessWidget {
   final AnimationController animationController;
@@ -255,7 +256,7 @@ class MediterranesnDietView extends StatelessWidget {
 
         final userData = snapshot.data!;
         final dailyCalories = userData['dailyCalories'];
-        final macroTargets = userData['macroTargets'];
+        final macroTargets = userData['macroTargets'] as MacroTargets;
 
         return Consumer<DiaryDataProvider>(
           builder: (context, diaryData, _) {
@@ -265,11 +266,11 @@ class MediterranesnDietView extends StatelessWidget {
             final dailyGoal = userData['dailyCalories'];
             final caloriesNeeded = dailyGoal - (eatenCalories - burnedCalories);
 
-            // Calculate remaining macros
-            final consumedMacros = diaryData.diaryData.macros;
-            final remainingCarbs = macroTargets['carbs']! - consumedMacros.carbs;
-            final remainingProtein = macroTargets['protein']! - consumedMacros.protein;
-            final remainingFat = macroTargets['fat']! - consumedMacros.fat;
+            // Calculate macro progress
+            final macroProgress = CalorieCalculator.calculateMacroProgress(
+              macroTargets,
+              diaryData.diaryData.macros,
+            );
 
             return AnimatedBuilder(
               animation: animationController,
@@ -279,10 +280,8 @@ class MediterranesnDietView extends StatelessWidget {
                   eatenCalories,
                   burnedCalories,
                   remainingCalories,
-                  remainingCarbs,
-                  remainingProtein,
-                  remainingFat,
-                  caloriesNeeded, // Add this parameter
+                  macroProgress,
+                  caloriesNeeded,
                   dailyGoal,
                 );
               },
@@ -298,10 +297,8 @@ class MediterranesnDietView extends StatelessWidget {
     double eatenCalories,
     double burnedCalories,
     double remainingCalories,
-    double remainingCarbs,
-    double remainingProtein,
-    double remainingFat,
-    double caloriesNeeded, // Add this parameter
+    MacroProgress macroProgress,
+    double caloriesNeeded,
     double dailyGoal,
   ) {
     // Replace hardcoded values with actual data
@@ -377,7 +374,7 @@ class MediterranesnDietView extends StatelessWidget {
                       Expanded(
                         child: _buildMacroRow(
                           'Carbs',
-                          remainingCarbs,
+                          macroProgress,
                           HexColor('#87A0E5'),
                           animation.value,
                         ),
@@ -389,7 +386,7 @@ class MediterranesnDietView extends StatelessWidget {
                           children: <Widget>[
                             _buildMacroRow(
                               'Protein',
-                              remainingProtein,
+                              macroProgress,
                               HexColor('#F56E98'),
                               animation.value,
                             ),
@@ -403,7 +400,7 @@ class MediterranesnDietView extends StatelessWidget {
                           children: <Widget>[
                             _buildMacroRow(
                               'Fat',
-                              remainingFat,
+                              macroProgress,
                               HexColor('#F1B440'),
                               animation.value,
                             ),
@@ -502,64 +499,129 @@ class MediterranesnDietView extends StatelessWidget {
     );
   }
 
-  Widget _buildMacroRow(String label, double remaining, Color color, double animValue) {
+  Widget _buildMacroRow(String label, MacroProgress progress, Color color, double animValue) {
+    final MacroData macroData = _getMacroData(label, progress);
+    final bool isOver = macroData.remaining < 0;
+    
+    final String displayText = isOver 
+        ? '${macroData.remaining.abs().toStringAsFixed(1)}g over'
+        : '${macroData.remaining.toStringAsFixed(1)}g left';
+
+    final double progressValue = macroData.percentage;
+    
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
+      children: [
+        Row(
+          children: [
+            Text(
+              '${label} (${macroData.consumed.toStringAsFixed(1)}/${macroData.target.toStringAsFixed(1)}g)',
+              style: TextStyle(
+                fontFamily: FitnessAppTheme.fontName,
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+                letterSpacing: -0.2,
+                color: FitnessAppTheme.darkText,
+              ),
+            ),
+            if (isOver) const SizedBox(width: 4),
+            if (isOver)
+              Tooltip(
+                message: 'Exceeded ${label.toLowerCase()} target',
+                child: Icon(
+                  Icons.warning,
+                  size: 16,
+                  color: Colors.orange,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        SizedBox(
+          width: 70,
+          child: Stack(
+            children: [
+              // Background
+              Container(
+                height: 4,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              // Progress
+              Container(
+                height: 4,
+                width: 70 * progressValue * animValue,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      isOver ? Colors.orange : color,
+                      isOver ? Colors.orange.withOpacity(0.5) : color.withOpacity(0.5),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
         Text(
-          label,
-          textAlign: TextAlign.center,
+          displayText,
           style: TextStyle(
             fontFamily: FitnessAppTheme.fontName,
-            fontWeight: FontWeight.w500,
-            fontSize: 16,
-            letterSpacing: -0.2,
-            color: FitnessAppTheme.darkText,
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Container(
-            height: 4,
-            width: 70,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius: BorderRadius.all(Radius.circular(4.0)),
-            ),
-            child: Row(
-              children: <Widget>[
-                Container(
-                  width: ((70 / 1.2) * animValue),
-                  height: 4,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [
-                      color,
-                      color.withOpacity(0.5),
-                    ]),
-                    borderRadius: BorderRadius.all(Radius.circular(4.0)),
-                  ),
-                )
-              ],
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Text(
-            '${remaining.toInt()}g left',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: FitnessAppTheme.fontName,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-              color: FitnessAppTheme.grey.withOpacity(0.5),
-            ),
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
+            color: isOver ? Colors.orange : FitnessAppTheme.grey.withOpacity(0.5),
           ),
         ),
       ],
     );
   }
+
+  MacroData _getMacroData(String label, MacroProgress progress) {
+    switch (label.toLowerCase()) {
+      case 'carbs':
+        return MacroData(
+          consumed: progress.carbsConsumed,
+          target: progress.carbsTarget,
+          remaining: progress.carbsRemaining,
+          percentage: progress.carbsPercentage,
+        );
+      case 'protein':
+        return MacroData(
+          consumed: progress.proteinConsumed,
+          target: progress.proteinTarget,
+          remaining: progress.proteinRemaining,
+          percentage: progress.proteinPercentage,
+        );
+      case 'fat':
+        return MacroData(
+          consumed: progress.fatConsumed,
+          target: progress.fatTarget,
+          remaining: progress.fatRemaining,
+          percentage: progress.fatPercentage,
+        );
+      default:
+        throw ArgumentError('Unknown macro type: $label');
+    }
+  }
+}
+
+class MacroData {
+  final double consumed;
+  final double target;
+  final double remaining;
+  final double percentage;
+
+  const MacroData({
+    required this.consumed,
+    required this.target,
+    required this.remaining,
+    required this.percentage,
+  });
 }
 
 class CurvePainter extends CustomPainter {
