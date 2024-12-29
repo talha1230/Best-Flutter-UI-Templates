@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../fitness_app/fitness_app_theme.dart';
+import '../widgets/animated_logo.dart';
+import '../widgets/animated_background.dart';
+import '../widgets/animated_form_field.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -9,7 +12,7 @@ class RegisterScreen extends StatefulWidget {
   _RegisterScreenState createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProviderStateMixin {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -18,6 +21,64 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _ageController = TextEditingController();
   final _fitnessGoalController = TextEditingController();
   bool _isLoading = false;
+
+  late AnimationController _formAnimationController;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+  
+  final _formKey = GlobalKey<FormState>();
+  bool _obscurePassword = true;
+  int _passwordStrength = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeAnimations();
+  }
+
+  void _initializeAnimations() {
+    _formAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _formAnimationController,
+      curve: Curves.easeOut,
+    ));
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _formAnimationController,
+      curve: Curves.easeIn,
+    ));
+
+    _formAnimationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _formAnimationController.dispose();
+    super.dispose();
+  }
+
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) return 'Password is required';
+    if (value.length < 8) return 'Password must be at least 8 characters';
+    
+    _passwordStrength = 0;
+    if (value.contains(RegExp(r'[A-Z]'))) _passwordStrength++;
+    if (value.contains(RegExp(r'[a-z]'))) _passwordStrength++;
+    if (value.contains(RegExp(r'[0-9]'))) _passwordStrength++;
+    if (value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) _passwordStrength++;
+    
+    return null;
+  }
 
   Future<void> _handleRegister() async {
     if (_emailController.text.isEmpty || 
@@ -74,52 +135,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Container(
-          height: MediaQuery.of(context).size.height,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [FitnessAppTheme.nearlyDarkBlue, FitnessAppTheme.nearlyBlue],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: SafeArea(
+      body: AnimatedBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    'Create Account',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                  const SizedBox(height: 20),
+                  const Hero(
+                    tag: 'app_logo',
+                    child: Logo(
+                      isDarkMode: true,
+                      size: 200, // Increased from 120 to 200
                     ),
                   ),
-                  const SizedBox(height: 48),
-                  _buildTextField(_nameController, 'Name'),
-                  const SizedBox(height: 16),
-                  _buildTextField(_emailController, 'Email', isEmail: true),
-                  const SizedBox(height: 16),
-                  _buildTextField(_passwordController, 'Password', isPassword: true),
-                  const SizedBox(height: 16),
-                  _buildTextField(_heightController, 'Height (cm)', isNumber: true),
-                  const SizedBox(height: 16),
-                  _buildTextField(_weightController, 'Weight (kg)', isNumber: true),
-                  const SizedBox(height: 16),
-                  _buildTextField(_ageController, 'Age', isNumber: true),
-                  const SizedBox(height: 16),
-                  _buildTextField(_fitnessGoalController, 'Fitness Goal'),
-                  const SizedBox(height: 24),
-                  _buildRegisterButton(),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pushReplacementNamed('/login'),
-                    child: const Text(
-                      'Already have an account? Login',
-                      style: TextStyle(color: Colors.white),
+                  const SizedBox(height: 30),
+                  SlideTransition(
+                    position: _slideAnimation,
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: _buildRegistrationForm(),
                     ),
                   ),
                 ],
@@ -131,30 +167,134 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildTextField(
-    TextEditingController controller,
-    String label, {
-    bool isPassword = false,
-    bool isEmail = false,
-    bool isNumber = false,
-  }) {
-    return TextField(
-      controller: controller,
-      obscureText: isPassword,
-      keyboardType: isEmail ? TextInputType.emailAddress : isNumber ? TextInputType.number : TextInputType.text,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: Colors.white70),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.white70),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.white, width: 2),
+  Widget _buildRegistrationForm() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.95),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: FitnessAppTheme.primaryGold.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Form(
+        key: _formKey,
+        child: ListView(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            AnimatedFormField(
+              controller: _nameController,
+              label: 'Name',
+              icon: Icons.person,
+              validator: (value) => value?.isEmpty ?? true ? 'Name is required' : null,
+            ),
+            const SizedBox(height: 16),
+            AnimatedFormField(
+              controller: _emailController,
+              label: 'Email',
+              icon: Icons.email,
+              keyboardType: TextInputType.emailAddress,
+              validator: (value) {
+                if (value?.isEmpty ?? true) return 'Email is required';
+                if (!value!.contains('@')) return 'Invalid email format';
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            AnimatedFormField(
+              controller: _passwordController,
+              label: 'Password',
+              icon: Icons.lock,
+              isPassword: true,
+              obscureText: _obscurePassword,
+              onTogglePassword: () => setState(() => _obscurePassword = !_obscurePassword),
+              validator: _validatePassword,
+            ),
+            if (_passwordController.text.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              _buildPasswordStrengthIndicator(),
+            ],
+            const SizedBox(height: 16),
+            AnimatedFormField(
+              controller: _heightController,
+              label: 'Height (cm)',
+              icon: Icons.height,
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                if (value?.isEmpty ?? true) return 'Height is required';
+                final height = double.tryParse(value!);
+                if (height == null || height <= 0) return 'Invalid height';
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            AnimatedFormField(
+              controller: _weightController,
+              label: 'Weight (kg)',
+              icon: Icons.fitness_center,
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                if (value?.isEmpty ?? true) return 'Weight is required';
+                final weight = double.tryParse(value!);
+                if (weight == null || weight <= 0) return 'Invalid weight';
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            AnimatedFormField(
+              controller: _ageController,
+              label: 'Age',
+              icon: Icons.cake,
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                if (value?.isEmpty ?? true) return 'Age is required';
+                final age = int.tryParse(value!);
+                if (age == null || age <= 0) return 'Invalid age';
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            AnimatedFormField(
+              controller: _fitnessGoalController,
+              label: 'Fitness Goal',
+              icon: Icons.flag,
+              validator: (value) => value?.isEmpty ?? true ? 'Fitness Goal is required' : null,
+            ),
+            const SizedBox(height: 24),
+            _buildRegisterButton(),
+            const SizedBox(height: 16),
+            _buildLoginLink(),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPasswordStrengthIndicator() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        Text(
+          'Password Strength: ${['Very Weak', 'Weak', 'Medium', 'Strong', 'Very Strong'][_passwordStrength]}',
+          style: TextStyle(
+            color: _passwordStrength < 2 ? Colors.red : _passwordStrength < 4 ? Colors.orange : Colors.green,
+          ),
+        ),
+        const SizedBox(height: 4),
+        LinearProgressIndicator(
+          value: (_passwordStrength + 1) / 5,
+          backgroundColor: Colors.grey[300],
+          valueColor: AlwaysStoppedAnimation<Color>(
+            _passwordStrength < 2 ? Colors.red : _passwordStrength < 4 ? Colors.orange : Colors.green,
+          ),
+        ),
+      ],
     );
   }
 
@@ -164,7 +304,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: ElevatedButton(
         onPressed: _isLoading ? null : _handleRegister,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
+          backgroundColor: Colors.black,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -179,11 +319,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
             : const Text(
                 'Register',
                 style: TextStyle(
-                  color: FitnessAppTheme.nearlyDarkBlue,
+                  color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
+      ),
+    );
+  }
+
+  Widget _buildLoginLink() {
+    return TextButton(
+      onPressed: () {
+        Navigator.of(context).pushReplacementNamed('/login');
+      },
+      child: Text(
+        'Already have an account? Login',
+        style: TextStyle(
+          //color: FitnessAppTheme.darkCharcoal,
+          color: FitnessAppTheme.accentGold,
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }

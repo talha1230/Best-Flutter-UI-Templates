@@ -5,6 +5,8 @@ import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../services/diary_data_provider.dart';
 import '../fitness_app/fitness_app_theme.dart';
+import '../widgets/animated_background.dart';
+import '../widgets/animated_logo.dart';  // Add this import
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -108,17 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              FitnessAppTheme.darkCharcoal,
-              FitnessAppTheme.lightCharcoal,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+      body: AnimatedBackground(
         child: SafeArea(
           child: SingleChildScrollView(
             child: Padding(
@@ -126,9 +118,12 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 children: [
                   const SizedBox(height: 40),
-                  Image.asset(
-                    'assets/fitness_app/bacmy2024.png',
-                    height: 120,
+                  const Hero(
+                    tag: 'app_logo',
+                    child: Logo(
+                      isDarkMode: true,
+                      size: 200, // Increased from 120 to 200
+                    ),
                   ),
                   const SizedBox(height: 40),
                   Container(
