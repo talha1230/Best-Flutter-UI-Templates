@@ -68,6 +68,12 @@ class DatabaseService {
           'age': profileData['age'],
         if (profileData.containsKey('fitness_goal')) 
           'fitness_goal': profileData['fitness_goal'],
+        if (profileData.containsKey('gender')) 
+          'gender': profileData['gender'],
+        if (profileData.containsKey('activityLevel')) 
+          'activityLevel': profileData['activityLevel'],
+        if (profileData.containsKey('goal')) 
+          'goal': profileData['goal'],
       };
 
       print('Filtered valid data to update: $validData');

@@ -5,36 +5,54 @@ class CalorieCalculator {
   static const double ACTIVITY_ACTIVE = 1.725;
   static const double ACTIVITY_VERY_ACTIVE = 1.9;
 
+  static double calculateBMI({required double weight, required double height}) {
+    return weight / ((height / 100) * (height / 100));
+  }
+
   static double calculateBMR({
     required double weight,
     required double height,
     required int age,
     required bool isMale,
   }) {
-    if (isMale) {
-      return 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
-    } else {
-      return 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
-    }
+    // Mifflin-St Jeor Equation
+    double bmr = (10 * weight) + (6.25 * height) - (5 * age);
+    return isMale ? bmr + 5 : bmr - 161;
   }
 
   static double calculateDailyCalories({
     required double bmr,
-    double activityMultiplier = ACTIVITY_MODERATE,
+    required String activityLevel,
   }) {
-    return bmr * activityMultiplier;
+    // Activity multipliers
+    final multipliers = {
+      'sedentary': 1.2,      // Little or no exercise
+      'light': 1.375,        // Light exercise 1-3 days/week
+      'moderate': 1.55,      // Moderate exercise 3-5 days/week
+      'active': 1.725,       // Heavy exercise 6-7 days/week
+      'very_active': 1.9,    // Very heavy exercise, physical job
+    };
+
+    return bmr * (multipliers[activityLevel] ?? 1.2);
   }
 
-  static Map<String, double> calculateMacroTargets(double totalCalories) {
-    // 50% carbs, 30% protein, 20% fat
-    final carbCalories = totalCalories * 0.5;
-    final proteinCalories = totalCalories * 0.3;
-    final fatCalories = totalCalories * 0.2;
-
+  static Map<String, double> calculateMacroTargets(double dailyCalories) {
+    // Macro distribution: 40% carbs, 30% protein, 30% fat
     return {
-      'carbs': carbCalories / 4, // 4 calories per gram of carbs
-      'protein': proteinCalories / 4, // 4 calories per gram of protein
-      'fat': fatCalories / 9, // 9 calories per gram of fat
+      'carbs': (dailyCalories * 0.4) / 4,    // 4 calories per gram
+      'protein': (dailyCalories * 0.3) / 4,   // 4 calories per gram
+      'fat': (dailyCalories * 0.3) / 9,       // 9 calories per gram
     };
+  }
+
+  static double adjustCaloriesForGoal(double calories, String goal) {
+    switch (goal) {
+      case 'lose':
+        return calories - 500;  // 500 calorie deficit
+      case 'gain':
+        return calories + 500;  // 500 calorie surplus
+      default:
+        return calories;        // maintain weight
+    }
   }
 }

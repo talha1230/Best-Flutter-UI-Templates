@@ -28,20 +28,39 @@ class MediterranesnDietView extends StatelessWidget {
     final weight = double.parse(userData['weight'].toString());
     final height = double.parse(userData['height'].toString());
     final age = int.parse(userData['age'].toString());
+    final isMale = userData['gender'] == 'male';
+    final activityLevel = userData['activityLevel'] ?? 'moderate';
+    final goal = userData['goal'] ?? 'maintain';
+
+    final bmi = CalorieCalculator.calculateBMI(
+      weight: weight,
+      height: height,
+    );
 
     final bmr = CalorieCalculator.calculateBMR(
       weight: weight,
       height: height,
       age: age,
-      isMale: true, // TODO: Add gender to user profile
+      isMale: isMale,
     );
 
-    final dailyCalories = CalorieCalculator.calculateDailyCalories(bmr: bmr);
+    final baseCalories = CalorieCalculator.calculateDailyCalories(
+      bmr: bmr,
+      activityLevel: activityLevel,
+    );
+
+    final dailyCalories = CalorieCalculator.adjustCaloriesForGoal(
+      baseCalories,
+      goal,
+    );
+
     final macroTargets = CalorieCalculator.calculateMacroTargets(dailyCalories);
 
     return {
+      'bmi': bmi,
       'dailyCalories': dailyCalories,
       'macroTargets': macroTargets,
+      'baseCalories': baseCalories,
     };
   }
 
@@ -80,8 +99,17 @@ class MediterranesnDietView extends StatelessWidget {
   }
 
   double _calculateProgress(double caloriesLeft, double goal) {
-    // Convert to percentage and ensure it's between 0 and 1
-    double progress = (goal - caloriesLeft) / goal;
+    // If no calories consumed, return 0
+    if (goal <= 0) return 0.0;
+    
+    // Calculate consumed calories
+    double consumed = goal - caloriesLeft;
+    if (consumed <= 0) return 0.0;
+    
+    // Calculate progress percentage
+    double progress = consumed / goal;
+    
+    // Ensure progress is between 0 and 1
     return progress.clamp(0.0, 1.0);
   }
 
@@ -120,9 +148,32 @@ class MediterranesnDietView extends StatelessWidget {
 
   Widget _buildProgressRing(double caloriesNeeded, double dailyGoal) {
     final color = _getCalorieStatusColor(caloriesNeeded);
-    final progress = _calculateProgress(caloriesNeeded, dailyGoal);
-    final message = _getProgressMessage(caloriesNeeded);
-    final angle = 140 + (360 - 140) * progress;
+    
+    // Calculate actual calories consumed
+    double caloriesConsumed = dailyGoal - caloriesNeeded;
+    
+    // Calculate the exact progress ratio based on actual calories
+    double progressRatio = 0.0;
+    if (dailyGoal > 0) {
+      progressRatio = (caloriesConsumed / dailyGoal);
+    }
+
+    // Map progress to angle range (278 to 360+278 degrees) for the full circle
+    const double startDegree = 278.0;
+    const double maxDegrees = 360.0;
+    
+    // Calculate exact sweep angle based on calories consumed
+    final double sweepAngle = maxDegrees * progressRatio;
+    
+    // Prevent negative angles
+    final double finalAngle = 278.0 + sweepAngle.clamp(0.0, maxDegrees);
+
+    print('Progress Debug:');
+    print('Daily Goal: $dailyGoal kcal');
+    print('Calories Consumed: $caloriesConsumed kcal');
+    print('Progress Ratio: ${(progressRatio * 100).toStringAsFixed(2)}%');
+    print('Sweep Angle: $sweepAngle°');
+    print('Final Angle: $finalAngle°');
 
     return Stack(
       clipBehavior: Clip.none,
@@ -163,7 +214,7 @@ class MediterranesnDietView extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  message,
+                  _getProgressMessage(caloriesNeeded),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 10,
@@ -180,7 +231,11 @@ class MediterranesnDietView extends StatelessWidget {
           child: CustomPaint(
             painter: CurvePainter(
               colors: [color, color.withOpacity(0.8), color.withOpacity(0.6)],
-              angle: angle,
+              angle: finalAngle,
+              progress: progressRatio,
+              dailyGoal: dailyGoal,
+              caloriesConsumed: caloriesConsumed,
+              startAngle: startDegree,
             ),
             child: const SizedBox(
               width: 108,
@@ -513,11 +568,48 @@ class MediterranesnDietView extends StatelessWidget {
 class CurvePainter extends CustomPainter {
   final double? angle;
   final List<Color>? colors;
+  final double progress;
+  final double dailyGoal;
+  final double caloriesConsumed;
+  final double startAngle;
 
-  CurvePainter({this.colors, this.angle = 140});
+  CurvePainter({
+    this.colors, 
+    this.angle = 278,
+    this.progress = 0.0,
+    this.dailyGoal = 0.0,
+    this.caloriesConsumed = 0.0,
+    this.startAngle = 278.0,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (caloriesConsumed <= 0 || dailyGoal <= 0) {
+      _drawEmptyRing(canvas, size);
+      return;
+    }
+
+    // Calculate exact sweep angle in radians
+    final startRad = degreeToRadians(startAngle);
+    final sweepRad = degreeToRadians(angle! - startAngle);
+
+    _drawProgressRing(canvas, size, startRad, sweepRad);
+  }
+
+  void _drawEmptyRing(Canvas canvas, Size size) {
+    final emptyPaint = Paint()
+      ..color = Colors.grey.withOpacity(0.2)
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 14;
+    
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = math.min(size.width / 2, size.height / 2) - (14 / 2);
+    
+    canvas.drawCircle(center, radius, emptyPaint);
+  }
+
+  void _drawProgressRing(Canvas canvas, Size size, double startRad, double sweepRad) {
     List<Color> colorsList = [];
     if (colors != null) {
       colorsList = colors ?? [];
@@ -584,8 +676,8 @@ class CurvePainter extends CustomPainter {
 
     canvas.drawArc(
         new Rect.fromCircle(center: center, radius: radius),
-        degreeToRadians(278),
-        degreeToRadians(360 - (365 - angle!)),
+        startRad,
+        sweepRad,
         false,
         paint);
 
@@ -604,7 +696,7 @@ class CurvePainter extends CustomPainter {
     canvas.save();
 
     canvas.translate(centerToCircle, centerToCircle);
-    canvas.rotate(degreeToRadians(angle! + 2));
+    canvas.rotate(startRad + sweepRad);
 
     canvas.save();
     canvas.translate(0.0, -centerToCircle + 14 / 2);
