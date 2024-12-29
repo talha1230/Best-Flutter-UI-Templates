@@ -61,6 +61,30 @@ class MediterranesnDietView extends StatelessWidget {
     return '${caloriesNeeded.toInt()} Kcal to reach goal';
   }
 
+  Color _getProgressColor(double caloriesLeft, double goal) {
+    if (caloriesLeft >= 0) {
+      return Colors.green; // Within goal
+    } else if (caloriesLeft >= -200) {
+      return Colors.orange; // Slightly over
+    }
+    return Colors.red; // Far over
+  }
+
+  String _getProgressMessage(double caloriesLeft) {
+    if (caloriesLeft >= 0) {
+      return 'Goal reached! Keep it up!';
+    } else if (caloriesLeft >= -200) {
+      return 'Almost there!';
+    }
+    return 'Over by ${(-caloriesLeft).toInt()} Kcal';
+  }
+
+  double _calculateProgress(double caloriesLeft, double goal) {
+    // Convert to percentage and ensure it's between 0 and 1
+    double progress = (goal - caloriesLeft) / goal;
+    return progress.clamp(0.0, 1.0);
+  }
+
   Widget _buildCalorieStatus(double caloriesNeeded) {
     final color = _getCalorieStatusColor(caloriesNeeded);
     final message = _getCalorieStatusMessage(caloriesNeeded);
@@ -91,6 +115,80 @@ class MediterranesnDietView extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildProgressRing(double caloriesNeeded, double dailyGoal) {
+    final color = _getCalorieStatusColor(caloriesNeeded);
+    final progress = _calculateProgress(caloriesNeeded, dailyGoal);
+    final message = _getProgressMessage(caloriesNeeded);
+    final angle = 140 + (360 - 140) * progress;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              color: FitnessAppTheme.white,
+              borderRadius: BorderRadius.circular(100.0),
+              border: Border.all(
+                width: 4,
+                color: color.withOpacity(0.2),
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '${caloriesNeeded.abs().toInt()}',
+                  style: TextStyle(
+                    fontFamily: FitnessAppTheme.fontName,
+                    fontWeight: FontWeight.normal,
+                    fontSize: 24,
+                    color: color,
+                  ),
+                ),
+                Text(
+                  caloriesNeeded >= 0 ? 'Kcal left' : 'Kcal over',
+                  style: TextStyle(
+                    fontFamily: FitnessAppTheme.fontName,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    color: color.withOpacity(0.5),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: color,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(4.0),
+          child: CustomPaint(
+            painter: CurvePainter(
+              colors: [color, color.withOpacity(0.8), color.withOpacity(0.6)],
+              angle: angle,
+            ),
+            child: const SizedBox(
+              width: 108,
+              height: 108,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -133,6 +231,7 @@ class MediterranesnDietView extends StatelessWidget {
                   remainingProtein,
                   remainingFat,
                   caloriesNeeded, // Add this parameter
+                  dailyGoal,
                 );
               },
             );
@@ -151,6 +250,7 @@ class MediterranesnDietView extends StatelessWidget {
     double remainingProtein,
     double remainingFat,
     double caloriesNeeded, // Add this parameter
+    double dailyGoal,
   ) {
     // Replace hardcoded values with actual data
     return FadeTransition(
@@ -200,81 +300,7 @@ class MediterranesnDietView extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.only(right: 16),
                         child: Center(
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: <Widget>[
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Container(
-                                  width: 100,
-                                  height: 100,
-                                  decoration: BoxDecoration(
-                                    color: FitnessAppTheme.white,
-                                    borderRadius: BorderRadius.all(
-                                      Radius.circular(100.0),
-                                    ),
-                                    border: new Border.all(
-                                        width: 4,
-                                        color: FitnessAppTheme
-                                            .nearlyDarkBlue
-                                            .withOpacity(0.2)),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: <Widget>[
-                                      Text(
-                                        '${(remainingCalories * animation.value).toInt()}',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontFamily:
-                                              FitnessAppTheme.fontName,
-                                          fontWeight: FontWeight.normal,
-                                          fontSize: 24,
-                                          letterSpacing: 0.0,
-                                          color: FitnessAppTheme
-                                              .nearlyDarkBlue,
-                                        ),
-                                      ),
-                                      Text(
-                                        'Kcal left',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontFamily:
-                                              FitnessAppTheme.fontName,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                          letterSpacing: 0.0,
-                                          color: FitnessAppTheme.grey
-                                              .withOpacity(0.5),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(4.0),
-                                child: CustomPaint(
-                                  painter: CurvePainter(
-                                      colors: [
-                                        FitnessAppTheme.nearlyDarkBlue,
-                                        HexColor("#8A98E8"),
-                                        HexColor("#8A98E8")
-                                      ],
-                                      angle: 140 +
-                                          (360 - 140) *
-                                              (1.0 - animation.value)),
-                                  child: SizedBox(
-                                    width: 108,
-                                    height: 108,
-                                  ),
-                                ),
-                              )
-                            ],
-                          ),
+                          child: _buildProgressRing(caloriesNeeded, dailyGoal),
                         ),
                       )
                     ],
@@ -480,27 +506,6 @@ class MediterranesnDietView extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildProgressRing(double caloriesNeeded, double dailyGoal) {
-    // Calculate progress percentage
-    final progress = math.max(0.0, math.min(1.0, (dailyGoal - caloriesNeeded) / dailyGoal));
-    final angle = 140 + (360 - 140) * progress;
-    
-    return CustomPaint(
-      painter: CurvePainter(
-        colors: [
-          _getCalorieStatusColor(caloriesNeeded),
-          HexColor("#8A98E8"),
-          HexColor("#8A98E8"),
-        ],
-        angle: angle,
-      ),
-      child: const SizedBox(
-        width: 108,
-        height: 108,
-      ),
     );
   }
 }
