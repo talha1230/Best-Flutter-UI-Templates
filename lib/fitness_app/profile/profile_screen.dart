@@ -57,6 +57,17 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: FitnessAppTheme.background,
+      appBar: AppBar(
+        title: Text('Profile', style: FitnessAppTheme.title),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.red),
+            onPressed: () => _showLogoutDialog(context),
+          ),
+        ],
+        elevation: 0,
+        backgroundColor: FitnessAppTheme.background,
+      ),
       body: SafeArea(
         child: FutureBuilder<Map<String, dynamic>>(
           future: UserService.userId != null 
@@ -91,29 +102,58 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 children: [
                   const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text('Profile', style: FitnessAppTheme.title),
-                  ),
-                  _buildBMICard(height, weight),
-                  _buildProfileInfo('Name', userData['name']),
-                  _buildProfileInfo('Email', userData['email']),
-                  _buildProfileInfo('Height', '${height.toStringAsFixed(1)} cm'),
-                  _buildProfileInfo('Weight', '${weight.toStringAsFixed(1)} kg'),
-                  _buildProfileInfo('Age', '${userData['age']}'),
-                  _buildProfileInfo('Fitness Goal', userData['fitness_goal']),
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: ElevatedButton(
-                      onPressed: () => _showLogoutDialog(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        minimumSize: const Size(double.infinity, 50),
-                      ),
-                      child: const Text('Logout', style: TextStyle(color: Colors.white)),
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundColor: FitnessAppTheme.nearlyDarkBlue,
+                    child: Text(
+                      userData['name'][0].toUpperCase(),
+                      style: const TextStyle(fontSize: 40, color: Colors.white),
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  Text(
+                    userData['name'],
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    userData['email'],
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _buildBMICard(height, weight),
+                  Container(
+                    margin: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          spreadRadius: 1,
+                          blurRadius: 10,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        _buildProfileInfoNew('Height', '${height.toStringAsFixed(1)} cm', Icons.height),
+                        _buildDivider(),
+                        _buildProfileInfoNew('Weight', '${weight.toStringAsFixed(1)} kg', Icons.monitor_weight),
+                        _buildDivider(),
+                        _buildProfileInfoNew('Age', '${userData['age']}', Icons.calendar_today),
+                        _buildDivider(),
+                        _buildProfileInfoNew('Goal', userData['fitness_goal'], Icons.flag),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20), // Bottom padding for navigation bar
                 ],
               ),
             );
@@ -123,15 +163,44 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileInfo(String label, String value) {
+  Widget _buildProfileInfoNew(String label, String value, IconData icon) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Card(
-        child: ListTile(
-          title: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-          subtitle: Text(value),
-        ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Icon(icon, color: FitnessAppTheme.nearlyDarkBlue, size: 24),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 14,
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Divider(
+      height: 1,
+      thickness: 1,
+      color: Colors.grey[200],
+      indent: 56,
+      endIndent: 16,
     );
   }
 

@@ -34,6 +34,16 @@ flutter run
 - 📈 Activity Statistics
 - 💪 Exercise Library
 
+## Screenshots
+
+<p align="center">
+  <img src="flutter_01.png" width="270" alt="Fitness App Home Screen">
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="flutter_02.png" width="270" alt="Fitness App Workout Screen">
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="flutter_03.png" width="270" alt="Fitness App Meal Screen">
+</p>
+
 ## Project Structure
 
 ```

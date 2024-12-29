@@ -20,6 +20,13 @@ class FitnessAppTheme {
   static const Color spacer = Color(0xFFF2F2F2);
   static const String fontName = 'Roboto';
 
+  // Add new professional colors
+  static const Color primaryGold = Color(0xFFFFD700);
+  static const Color secondaryGold = Color(0xFFFFC107);
+  static const Color darkCharcoal = Color(0xFF2C2C2C);
+  static const Color lightCharcoal = Color(0xFF404040);
+  static const Color accentGold = Color(0xFFFFE57F);
+
   static const TextTheme textTheme = TextTheme(
     displayLarge: display1,
     displayMedium: headline,
