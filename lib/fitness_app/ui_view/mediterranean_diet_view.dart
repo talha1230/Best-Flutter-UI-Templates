@@ -152,28 +152,25 @@ class MediterranesnDietView extends StatelessWidget {
     // Calculate actual calories consumed
     double caloriesConsumed = dailyGoal - caloriesNeeded;
     
-    // Calculate the exact progress ratio based on actual calories
+    // Calculate true progress ratio (0 to 1)
     double progressRatio = 0.0;
     if (dailyGoal > 0) {
-      progressRatio = (caloriesConsumed / dailyGoal);
+      progressRatio = (caloriesConsumed / dailyGoal).clamp(0.0, 1.0);
     }
 
-    // Map progress to angle range (278 to 360+278 degrees) for the full circle
-    const double startDegree = 278.0;
-    const double maxDegrees = 360.0;
+    // Constants for arc drawing
+    const double startAngle = -90.0; // Start from top
+    const double maxSweepAngle = 360.0; // Full circle sweep
     
-    // Calculate exact sweep angle based on calories consumed
-    final double sweepAngle = maxDegrees * progressRatio;
-    
-    // Prevent negative angles
-    final double finalAngle = 278.0 + sweepAngle.clamp(0.0, maxDegrees);
+    // Calculate sweep angle based on progress
+    final double sweepAngle = maxSweepAngle * progressRatio;
 
     print('Progress Debug:');
     print('Daily Goal: $dailyGoal kcal');
     print('Calories Consumed: $caloriesConsumed kcal');
     print('Progress Ratio: ${(progressRatio * 100).toStringAsFixed(2)}%');
+    print('Start Angle: $startAngle°');
     print('Sweep Angle: $sweepAngle°');
-    print('Final Angle: $finalAngle°');
 
     return Stack(
       clipBehavior: Clip.none,
@@ -231,11 +228,11 @@ class MediterranesnDietView extends StatelessWidget {
           child: CustomPaint(
             painter: CurvePainter(
               colors: [color, color.withOpacity(0.8), color.withOpacity(0.6)],
-              angle: finalAngle,
+              startAngle: startAngle,
+              sweepAngle: sweepAngle,
               progress: progressRatio,
               dailyGoal: dailyGoal,
               caloriesConsumed: caloriesConsumed,
-              startAngle: startDegree,
             ),
             child: const SizedBox(
               width: 108,
@@ -566,20 +563,20 @@ class MediterranesnDietView extends StatelessWidget {
 }
 
 class CurvePainter extends CustomPainter {
-  final double? angle;
   final List<Color>? colors;
+  final double startAngle;
+  final double sweepAngle;
   final double progress;
   final double dailyGoal;
   final double caloriesConsumed;
-  final double startAngle;
 
   CurvePainter({
-    this.colors, 
-    this.angle = 278,
+    this.colors,
+    this.startAngle = -90.0,
+    this.sweepAngle = 0.0,
     this.progress = 0.0,
     this.dailyGoal = 0.0,
     this.caloriesConsumed = 0.0,
-    this.startAngle = 278.0,
   });
 
   @override
@@ -589,11 +586,7 @@ class CurvePainter extends CustomPainter {
       return;
     }
 
-    // Calculate exact sweep angle in radians
-    final startRad = degreeToRadians(startAngle);
-    final sweepRad = degreeToRadians(angle! - startAngle);
-
-    _drawProgressRing(canvas, size, startRad, sweepRad);
+    _drawProgressRing(canvas, size);
   }
 
   void _drawEmptyRing(Canvas canvas, Size size) {
@@ -609,102 +602,40 @@ class CurvePainter extends CustomPainter {
     canvas.drawCircle(center, radius, emptyPaint);
   }
 
-  void _drawProgressRing(Canvas canvas, Size size, double startRad, double sweepRad) {
-    List<Color> colorsList = [];
-    if (colors != null) {
-      colorsList = colors ?? [];
-    } else {
-      colorsList.addAll([Colors.white, Colors.white]);
-    }
-
-    final shdowPaint = new Paint()
-      ..color = Colors.black.withOpacity(0.4)
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 14;
-    final shdowPaintCenter = new Offset(size.width / 2, size.height / 2);
-    final shdowPaintRadius =
-        math.min(size.width / 2, size.height / 2) - (14 / 2);
-    canvas.drawArc(
-        new Rect.fromCircle(center: shdowPaintCenter, radius: shdowPaintRadius),
-        degreeToRadians(278),
-        degreeToRadians(360 - (365 - angle!)),
-        false,
-        shdowPaint);
-
-    shdowPaint.color = Colors.grey.withOpacity(0.3);
-    shdowPaint.strokeWidth = 16;
-    canvas.drawArc(
-        new Rect.fromCircle(center: shdowPaintCenter, radius: shdowPaintRadius),
-        degreeToRadians(278),
-        degreeToRadians(360 - (365 - angle!)),
-        false,
-        shdowPaint);
-
-    shdowPaint.color = Colors.grey.withOpacity(0.2);
-    shdowPaint.strokeWidth = 20;
-    canvas.drawArc(
-        new Rect.fromCircle(center: shdowPaintCenter, radius: shdowPaintRadius),
-        degreeToRadians(278),
-        degreeToRadians(360 - (365 - angle!)),
-        false,
-        shdowPaint);
-
-    shdowPaint.color = Colors.grey.withOpacity(0.1);
-    shdowPaint.strokeWidth = 22;
-    canvas.drawArc(
-        new Rect.fromCircle(center: shdowPaintCenter, radius: shdowPaintRadius),
-        degreeToRadians(278),
-        degreeToRadians(360 - (365 - angle!)),
-        false,
-        shdowPaint);
-
-    final rect = new Rect.fromLTWH(0.0, 0.0, size.width, size.width);
-    final gradient = new SweepGradient(
-      startAngle: degreeToRadians(268),
-      endAngle: degreeToRadians(270.0 + 360),
-      tileMode: TileMode.repeated,
-      colors: colorsList,
-    );
-    final paint = new Paint()
-      ..shader = gradient.createShader(rect)
-      ..strokeCap = StrokeCap.round // StrokeCap.round is not recommended.
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 14;
-    final center = new Offset(size.width / 2, size.height / 2);
+  void _drawProgressRing(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width / 2, size.height / 2) - (14 / 2);
+    final rect = Rect.fromCircle(center: center, radius: radius);
 
-    canvas.drawArc(
-        new Rect.fromCircle(center: center, radius: radius),
-        startRad,
-        sweepRad,
+    // Draw background ring
+    final bgPaint = Paint()
+      ..color = Colors.grey.withOpacity(0.2)
+      ..strokeWidth = 14
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    
+    canvas.drawCircle(center, radius, bgPaint);
+
+    // Draw progress arc
+    if (sweepAngle > 0) {
+      final paint = Paint()
+        ..shader = SweepGradient(
+          colors: colors ?? [Colors.blue, Colors.blue.withOpacity(0.8)],
+          startAngle: degreeToRadians(startAngle),
+          endAngle: degreeToRadians(startAngle + sweepAngle),
+        ).createShader(rect)
+        ..strokeWidth = 14
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke;
+
+      canvas.drawArc(
+        rect,
+        degreeToRadians(startAngle),
+        degreeToRadians(sweepAngle),
         false,
-        paint);
-
-    final gradient1 = new SweepGradient(
-      tileMode: TileMode.repeated,
-      colors: [Colors.white, Colors.white],
-    );
-
-    var cPaint = new Paint();
-    cPaint..shader = gradient1.createShader(rect);
-    cPaint..color = Colors.white;
-    cPaint..strokeWidth = 14 / 2;
-    canvas.save();
-
-    final centerToCircle = size.width / 2;
-    canvas.save();
-
-    canvas.translate(centerToCircle, centerToCircle);
-    canvas.rotate(startRad + sweepRad);
-
-    canvas.save();
-    canvas.translate(0.0, -centerToCircle + 14 / 2);
-    canvas.drawCircle(new Offset(0, 0), 14 / 5, cPaint);
-
-    canvas.restore();
-    canvas.restore();
-    canvas.restore();
+        paint,
+      );
+    }
   }
 
   @override
