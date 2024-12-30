@@ -44,8 +44,9 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId "Unimy Fitness App"
+        // Change this line
+        applicationId "com.unimy.fitnessapp"  // Valid package name format
+        // Rest of the config remains same
         minSdkVersion flutter.minSdkVersion
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
