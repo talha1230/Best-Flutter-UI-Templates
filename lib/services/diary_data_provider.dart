@@ -28,7 +28,7 @@ class DiaryDataProvider extends ChangeNotifier {
       final userMeals = await DatabaseService.getUserMeals(
         UserService.userId!,
         date: DateTime.now(),
-      ) as List<Meal>;  // Add type cast
+      );  // Add type cast
 
       _diaryData = DiaryData(
         weight: double.parse(userData['weight'].toString()),
@@ -73,11 +73,6 @@ class DiaryDataProvider extends ChangeNotifier {
         status: meal.status,
         reason: meal.reason,
       );
-
-      // If successful, update local state
-      if (_diaryData.meals == null) {
-        _diaryData.meals = [];
-      }
       _diaryData.meals.add(savedMeal);
       _diaryData.eatenCalories += savedMeal.calories;
       _diaryData.macros.carbs += savedMeal.macros.carbs;

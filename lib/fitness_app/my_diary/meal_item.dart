@@ -232,8 +232,7 @@ class MealItem extends StatelessWidget {
       reason = await showDialog<String>(
         context: context,
         builder: (context) => _ReasonDialog(),
-      );
-      if (reason == null) return;  // User cancelled
+      );  // User cancelled
     }
 
     final updatedMeal = Meal(
