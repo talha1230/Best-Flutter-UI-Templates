@@ -3,6 +3,7 @@ import '../fitness_app/models/diary_data.dart';
 import 'database_service.dart';
 import 'user_service.dart';
 import 'package:appwrite/models.dart';
+import '../fitness_app/models/macro_nutrients.dart';
 
 class DiaryDataProvider extends ChangeNotifier {
   DiaryData _diaryData = DiaryData();
@@ -37,14 +38,7 @@ class DiaryDataProvider extends ChangeNotifier {
         waterGoal: int.parse(userData['water_goal'].toString()),
         meals: userMeals,
         eatenCalories: userMeals.fold<double>(0, (sum, Meal meal) => sum + meal.calories),  // Add type
-        macros: userMeals.fold<MacroNutrients>(
-          MacroNutrients(),
-          (MacroNutrients sum, Meal meal) => MacroNutrients(  // Add types
-            carbs: sum.carbs + meal.macros.carbs,
-            protein: sum.protein + meal.macros.protein,
-            fat: sum.fat + meal.macros.fat,
-          ),
-        ),
+        macros: _calculateTotalMacros(userMeals),
       );
       
       _initialized = true;
@@ -75,9 +69,9 @@ class DiaryDataProvider extends ChangeNotifier {
       );
       _diaryData.meals.add(savedMeal);
       _diaryData.eatenCalories += savedMeal.calories;
-      _diaryData.macros.carbs += savedMeal.macros.carbs;
-      _diaryData.macros.protein += savedMeal.macros.protein;
-      _diaryData.macros.fat += savedMeal.macros.fat;
+      
+      // Update macros by creating a new instance
+      _diaryData.macros = _diaryData.macros + savedMeal.macros;
       
       notifyListeners();
     } catch (e) {
@@ -136,19 +130,17 @@ class DiaryDataProvider extends ChangeNotifier {
   }
 
   void _updateTotals() {
+    // Calculate total calories from consumed meals
     _diaryData.eatenCalories = _diaryData.meals
         .where((m) => m.status == MealStatus.consumed)
         .fold<double>(0, (sum, meal) => sum + meal.calories);
         
+    // Calculate total macros from consumed meals
     _diaryData.macros = _diaryData.meals
         .where((m) => m.status == MealStatus.consumed)
         .fold<MacroNutrients>(
-          MacroNutrients(),
-          (sum, meal) => MacroNutrients(
-            carbs: sum.carbs + meal.macros.carbs,
-            protein: sum.protein + meal.macros.protein,
-            fat: sum.fat + meal.macros.fat,
-          ),
+          MacroNutrients(carbs: 0, protein: 0, fat: 0), // Fixed: Added required parameters
+          (sum, meal) => sum + meal.macros,
         );
   }
 
@@ -230,10 +222,20 @@ class DiaryDataProvider extends ChangeNotifier {
   }
 
   void reset() {
-    _diaryData = DiaryData();
+    _diaryData = DiaryData(
+      macros: MacroNutrients(carbs: 0, protein: 0, fat: 0), // Fixed: Added required parameters
+      // ...other parameters...
+    );
     _initialized = false;
     _isLoading = false;
     _error = null;
     notifyListeners();
+  }
+
+  MacroNutrients _calculateTotalMacros(List<Meal> userMeals) {
+    return userMeals.fold<MacroNutrients>(
+      MacroNutrients(carbs: 0, protein: 0, fat: 0), // Fixed: Added required parameters
+      (sum, meal) => sum + meal.macros,
+    );
   }
 }

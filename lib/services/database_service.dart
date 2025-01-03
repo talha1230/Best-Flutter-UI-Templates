@@ -1,6 +1,7 @@
 import 'package:appwrite/appwrite.dart';
 import 'appwrite_service.dart';
 import '../fitness_app/models/diary_data.dart';  // Add this import
+import '../fitness_app/models/macro_nutrients.dart';
 
 class DatabaseService {
   static Future<void> createWorkout({

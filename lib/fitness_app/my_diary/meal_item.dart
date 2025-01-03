@@ -3,6 +3,7 @@ import '../fitness_app_theme.dart';
 import '../models/diary_data.dart';
 import 'package:provider/provider.dart';
 import '../../services/diary_data_provider.dart';
+import '../models/macro_nutrients.dart';
 
 class MealItem extends StatelessWidget {
   final Meal meal;

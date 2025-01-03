@@ -2,11 +2,12 @@ import 'dart:io';
 import 'package:FITBACK/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'navigation_home_screen.dart';
-import 'screens/login_screen.dart';  // Verify this import exists
+import 'screens/login_screen.dart'; // Verify this import exists
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'services/appwrite_service.dart';
-import 'services/user_service.dart';  // Add this import
+import 'services/user_service.dart'; // Add this import
 import 'screens/register_screen.dart';
 import 'package:provider/provider.dart';
 import 'services/user_data_provider.dart';
@@ -16,7 +17,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   AppwriteService.initialize();
   await UserService.initialize();
-  
+  await dotenv.load();
+
   await SystemChrome.setPreferredOrientations(<DeviceOrientation>[
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown
@@ -50,7 +52,7 @@ class MyApp extends StatelessWidget {
         ),
         initialRoute: UserService.isLoggedIn ? '/home' : '/login',
         routes: {
-          '/login': (context) => const LoginScreen(),  // Add const here
+          '/login': (context) => const LoginScreen(), // Add const here
           '/register': (context) => const RegisterScreen(),
           '/home': (context) => NavigationHomeScreen(),
         },

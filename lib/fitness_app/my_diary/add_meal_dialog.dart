@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/diary_data.dart';
+import '../models/macro_nutrients.dart';
 
 class AddMealDialog extends StatefulWidget {
   final Function(Meal) onAdd;

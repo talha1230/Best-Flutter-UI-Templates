@@ -1,4 +1,5 @@
 import 'package:appwrite/appwrite.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AppwriteService {
   static Client client = Client();
@@ -7,17 +8,24 @@ class AppwriteService {
   static late final Storage storage;
   static late final Realtime realtime;
 
-  // Update these constants with the exact IDs from your Appwrite console
-  static const String projectId = '676e44ed001c5c1424fc'; //do not change this
-  static const String databaseId = '676e4e2d001f67247820'; //do not change this
-  static const String userCollectionId = 'user_profiles';  //do not change this too
-  static const String workoutCollectionId = '676e628c00139ebb5f8c';
-  static const String mealsCollectionId = 'meals';  //do not change this 
+  // Use environment variables
+  static String get projectId => dotenv.env['APPWRITE_PROJECT_ID'] ?? '';
+  static String get databaseId => dotenv.env['APPWRITE_DATABASE_ID'] ?? '';
+  static String get userCollectionId =>
+      dotenv.env['APPWRITE_USER_COLLECTION_ID'] ?? '';
+  static String get workoutCollectionId =>
+      dotenv.env['APPWRITE_WORKOUT_COLLECTION_ID'] ?? '';
+  static String get mealsCollectionId =>
+      dotenv.env['APPWRITE_MEALS_COLLECTION_ID'] ?? '';
 
-  static void initialize() {
+  static void initialize() async {
+    // Ensure .env is loaded
+    await dotenv.load();
+
     client
-      .setEndpoint('https://cloud.appwrite.io/v1')
-      .setProject(projectId);
+        .setEndpoint(
+            dotenv.env['APPWRITE_ENDPOINT'] ?? 'https://cloud.appwrite.io/v1')
+        .setProject(projectId);
 
     account = Account(client);
     databases = Databases(client);
