@@ -110,101 +110,99 @@ The built web files will be in `build/web` directory.
 
 ## Database Configuration
 
-### Appwrite Setup
-Let me help structure the environment configuration section in the 
+### Appwrite Setup Guide
 
-README.md
+1. Create Appwrite Account
+   - Go to [Appwrite Cloud](https://cloud.appwrite.io)
+   - Sign up for a new account or login
 
- file:
+2. Create New Project
+   - Click "Create Project"
+   - Name your project (e.g., "fitness_app")
+   - Choose a project ID
+   - Select "Add platform" and choose "Flutter"
+   - Follow the setup instructions for your platform
 
+3. Create Database
+   - Go to Databases → Create Database
+   - Name it (e.g., "fitness_db")
+   - Copy the Database ID
 
-
-## Environment Configuration
-
-### Setting Up Environment Variables
-1. Create a `.env` file in the project root
-2. Add the following variables:
-```properties
-APPWRITE_PROJECT_ID=your_project_id
-APPWRITE_DATABASE_ID=your_database_id
-APPWRITE_USER_COLLECTION_ID=your_user_collection_id
-APPWRITE_WORKOUT_COLLECTION_ID=your_workout_collection_id
-APPWRITE_MEALS_COLLECTION_ID=your_meals_collection_id
-APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
-```
-
-### Database Configuration
-
-#### Appwrite Setup
-1. Create an account on [Appwrite](https://appwrite.io/)
-2. Create a new project
-3. Set up the following collections:
-   - User Profiles (`user_profiles`)
-   - Workouts (`workouts`)
-   - Meals (`meals`)
-4. Copy your project credentials to 
-
-.env
-
- file
-
-#### Collection Structure
-
-### Database Schema
+4. Create Collections
+   Create the following collections with these attributes:
 
 #### User Profiles Collection
-| Attribute | Type | Description |
-|-----------|------|-------------|
-| user_id | string | Unique identifier (document ID) |
-| name | string | User's full name |
-| email | string | User's email address |
-| height | number | User's height in cm |
-| weight | number | User's weight in kg |
-| age | number | User's age |
-| fitness_goal | string | User's fitness objective |
-| water_intake | number | Daily water intake in glasses |
-| water_goal | number | Daily water intake goal |
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| name | string | Yes | User's full name |
+| email | string | Yes | User's email address |
+| profile_image | string | No | URL to profile image |
+| fitness_goals | string[] | No | Array of fitness goals |
+| weight | number | Yes | Weight in kg |
+| height | number | Yes | Height in cm |
 
 #### Workouts Collection
-| Attribute | Type | Description |
-|-----------|------|-------------|
-| user_id | string | Reference to user |
-| workout_name | string | Name of the workout |
-| exercises | string[] | List of exercises |
-| date | datetime | Date of workout |
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| user_id | string | Yes | Reference to user |
+| name | string | Yes | Workout name |
+| exercises | string[] | Yes | List of exercises |
+| duration | number | Yes | Duration in minutes |
+| date | datetime | Yes | Workout date |
 
 #### Meals Collection
-| Attribute | Type | Description |
-|-----------|------|-------------|
-| user_id | string | Reference to user |
-| name | string | Meal name |
-| calories | number | Total calories |
-| carbs | number | Carbohydrates in grams |
-| protein | number | Protein in grams |
-| fat | number | Fat in grams |
-| time_hour | number | Hour of meal (0-23) |
-| time_minute | number | Minute of meal (0-59) |
-| date | datetime | Date of meal |
-| status | string | Meal status (pending/consumed/skipped) |
-| reason | string | Reason for skipping (optional) |
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| user_id | string | Yes | Reference to user |
+| name | string | Yes | Meal name |
+| calories | number | Yes | Total calories |
+| protein | number | Yes | Protein in grams |
+| carbs | number | Yes | Carbs in grams |
+| fats | number | Yes | Fats in grams |
+| date | datetime | Yes | Meal date |
 
-### Security Notes
-- Never commit 
+### Environment Setup
 
+1. Create `.env` file in project root:
+```properties
+APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
+APPWRITE_PROJECT_ID=your_project_id        # From Project Settings
+APPWRITE_DATABASE_ID=your_database_id      # From Database Overview
+APPWRITE_USER_COLLECTION_ID=user_profiles  # From Collection Details
+APPWRITE_WORKOUT_COLLECTION_ID=workouts    # From Collection Details
+APPWRITE_MEALS_COLLECTION_ID=meals         # From Collection Details
+```
+
+2. Add `.env` to `.gitignore`:
+```
+# .gitignore
 .env
+```
 
- file to version control
-- Keep your API keys private
-- Use appropriate security rules in Appwrite Console
+3. Install dependencies in `pubspec.yaml`:
+```yaml
+dependencies:
+  flutter_dotenv: ^5.0.2
+  appwrite: ^9.0.0
+```
+
+4. Load environment variables in `main.dart`:
+```dart
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+void main() async {
+  await dotenv.load();  // Load .env file
+  AppwriteService.initialize();
+  runApp(MyApp());
+}
+```
+
+### Security Best Practices
+- Never commit `.env` to version control
+- Set up appropriate collection permissions in Appwrite Console
 - Enable authentication for all collections
-- Set up proper backup procedures
-
-## API Usage Guidelines
-- Respect rate limits (1000 requests/minute)
-- Implement proper error handling
-- Cache responses when appropriate
-- Follow Appwrite's best practices
-- Monitor usage in Appwrite Console
+- Use API keys only in secure environments
+- Monitor API usage in Appwrite Console
 
 ## License
 This project is licensed under the MIT License. You may freely use and modify the code, including Appwrite integrations, provided you:
@@ -216,4 +214,3 @@ This project is licensed under the MIT License. You may freely use and modify th
 
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details
-```
