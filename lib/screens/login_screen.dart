@@ -99,7 +99,11 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: ${e.toString()}')),
+          const SnackBar(
+            content: Text('Remember Your Password, Boy!'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
         );
       }
     } finally {
@@ -110,6 +114,16 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showTeamInfo(context),
+        backgroundColor: Colors.white,
+        child: const Icon(
+          Icons.groups_rounded,  // Changed icon to represent team
+          color: FitnessAppTheme.primaryGold,
+          size: 32,
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: AnimatedBackground(
         child: SafeArea(
           child: SingleChildScrollView(
@@ -253,6 +267,83 @@ class _LoginScreenState extends State<LoginScreen> {
         filled: true,
         fillColor: Colors.white,
       ),
+    );
+  }
+
+  void _showTeamInfo(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Team Members',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: FitnessAppTheme.darkCharcoal,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ...[
+                  'Talha',
+                  'Kai',
+                  'Riz',
+                  'Malvin',
+                ].map((member) => Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: FitnessAppTheme.primaryGold.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: FitnessAppTheme.primaryGold.withOpacity(0.5),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    member,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      color: FitnessAppTheme.darkCharcoal,
+                    ),
+                  ),
+                )).toList(),
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text(
+                    'Close',
+                    style: TextStyle(
+                      color: FitnessAppTheme.primaryGold,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

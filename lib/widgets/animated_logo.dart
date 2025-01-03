@@ -1,35 +1,34 @@
 import 'package:flutter/material.dart';
 
 class Logo extends StatelessWidget {
-  final double size;
   final bool isDarkMode;
+  final double size;
   
   const Logo({
-    Key? key, 
-    this.size = 200, // Changed default size from 120 to 200
+    super.key,
     this.isDarkMode = false,
-  }) : super(key: key);
+    this.size = 120,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: size,
       height: size,
-      width: size * 1.8, // Increased multiplier from 1.5 to 1.8 for better aspect ratio
-      child: isDarkMode 
-          ? ColorFiltered(
-              colorFilter: ColorFilter.mode(
-                Colors.white.withOpacity(0.9),
-                BlendMode.srcATop,
-              ),
-              child: Image.asset(
-                'assets/fitness_app/logo.png',
-                fit: BoxFit.contain,
-              ),
-            )
-          : Image.asset(
-              'assets/fitness_app/logo.png',
-              fit: BoxFit.contain,
-            ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(size / 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Image.asset(
+        'assets/fitness_app/logo.png',  // Updated path to match pubspec.yaml
+        fit: BoxFit.contain,
+      ),
     );
   }
 }
