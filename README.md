@@ -1,4 +1,3 @@
-
 # Fitness App
 
 A modern fitness tracking app built with Flutter featuring workout tracking, meal planning, and progress monitoring.
@@ -71,12 +70,6 @@ flutter test
 flutter build apk --release  # Android
 flutter build ios --release  # iOS
 ```
-Here's the updated section for the 
-
-README.md
-
- with browser platform running instructions:
-
 
 ### Running on Different Platforms
 
@@ -114,6 +107,11 @@ The built web files will be in `build/web` directory.
 ### Debugging in Browsers
 - Chrome DevTools: Press F12 or right-click -> Inspect
 - Edge DevTools: Press F12 or right-click -> Inspect
+
+## Database Configuration
+
+### Appwrite Setup
+1. Create an account on [Appwrite](https://appwrite.io/)
 
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details

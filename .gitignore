@@ -207,3 +207,8 @@ local.properties
 *.rar
 hs_err_pid*
 replay_pid*
+
+# Environment files
+.env
+*.env
+.env.*
